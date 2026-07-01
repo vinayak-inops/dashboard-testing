@@ -1,0 +1,287 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #F3F4F8;
+    color: #111827;
+  }
+}
+
+@layer components {
+  /* ── Layout ─────────────────────────────────── */
+  .dashboard-root { @apply flex min-h-screen; }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar {
+    @apply w-60 flex flex-col fixed top-0 left-0 bottom-0 z-30;
+    background-color: #FFFFFF;
+    border-right: 1px solid #E5E7EB;
+  }
+
+  .sidebar-logo {
+    @apply flex items-center gap-3 px-5 py-5;
+    border-bottom: 1px solid #F3F4F6;
+  }
+
+  .logo-mark {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center text-white flex-shrink-0;
+    background-color: #3B82F6;
+  }
+
+  .logo-title {
+    @apply text-sm font-bold tracking-wide leading-none;
+    color: #111827;
+  }
+
+  .logo-sub {
+    @apply text-[10px] mt-0.5 leading-none;
+    color: #9CA3AF;
+  }
+
+  .sidebar-nav {
+    @apply flex-1 px-3 py-4 overflow-y-auto;
+  }
+
+  .nav-section-label {
+    @apply text-[10px] font-semibold uppercase tracking-widest px-2 mb-2;
+    color: #D1D5DB;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-150 mb-0.5;
+    color: #6B7280;
+  }
+  .nav-item:hover {
+    background-color: #F9FAFB;
+    color: #111827;
+  }
+
+  .nav-item.active {
+    @apply font-medium;
+    background-color: #EFF6FF;
+    color: #2563EB;
+  }
+
+  .sidebar-footer {
+    @apply px-3 py-4;
+    border-top: 1px solid #F3F4F6;
+  }
+
+  .user-pill {
+    @apply flex items-center gap-2.5 px-3 py-2.5 rounded-xl;
+    background-color: #F9FAFB;
+    border: 1px solid #F3F4F6;
+  }
+
+  .user-avatar {
+    @apply w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0;
+    background-color: #3B82F6;
+  }
+
+  .user-name {
+    @apply text-xs font-semibold truncate;
+    color: #111827;
+  }
+
+  .user-role {
+    @apply text-[10px];
+    color: #9CA3AF;
+  }
+
+  /* ── Main ────────────────────────────────────── */
+  .main-content { @apply flex-1 ml-60 flex flex-col min-h-screen; }
+
+  /* ── Topbar ──────────────────────────────────── */
+  .topbar {
+    @apply sticky top-0 z-20 px-6 py-2.5 flex items-center justify-between;
+    background-color: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .topbar-left { @apply flex flex-col; }
+
+  .page-title {
+    @apply text-lg font-bold leading-tight;
+    color: #111827;
+  }
+
+  .page-subtitle {
+    @apply text-xs mt-0.5;
+    color: #9CA3AF;
+  }
+
+  .topbar-right { @apply flex items-center gap-2.5; }
+
+  .filter-pill {
+    @apply flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 cursor-pointer transition-colors border;
+    color: #374151;
+    background-color: #F9FAFB;
+    border-color: #E5E7EB;
+  }
+  .filter-pill:hover { background-color: #F3F4F6; }
+
+  .refresh-btn {
+    @apply w-8 h-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer disabled:opacity-50;
+    background-color: #F9FAFB;
+    border-color: #E5E7EB;
+    color: #6B7280;
+  }
+  .refresh-btn:hover { background-color: #F3F4F6; }
+
+  .notif-btn {
+    @apply relative w-8 h-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer;
+    background-color: #F9FAFB;
+    border-color: #E5E7EB;
+    color: #6B7280;
+  }
+  .notif-btn:hover { background-color: #F3F4F6; }
+
+  .notif-dot {
+    @apply absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full;
+    background-color: #EF4444;
+  }
+
+  /* ── Dashboard Body ──────────────────────────── */
+  .dashboard-body { @apply flex-1 px-6 py-4; }
+
+  /* ── Status Bar ──────────────────────────────── */
+  .status-bar {
+    @apply flex items-center gap-2 text-xs;
+    color: #6B7280;
+  }
+
+  .status-dot {
+    @apply w-1.5 h-1.5 rounded-full animate-pulse;
+    background-color: #22C55E;
+  }
+
+  .snapshot-badge {
+    @apply text-xs rounded-lg border px-2.5 py-1;
+    color: #9CA3AF;
+    background-color: #FFFFFF;
+    border-color: #E5E7EB;
+  }
+
+  /* ── KPI Grid ────────────────────────────────── */
+  .kpi-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-5;
+  }
+
+  /* ── KPI Card ────────────────────────────────── */
+  .kpi-card {
+    @apply relative bg-white rounded-xl border overflow-hidden
+           transition-all duration-200 hover:-translate-y-0.5 cursor-default;
+    border-color: #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .kpi-card:hover {
+    box-shadow: 0 4px 16px rgba(59,130,246,0.08);
+    border-color: #BFDBFE;
+  }
+
+  .kpi-accent { @apply absolute top-0 left-0 right-0 h-0.5; }
+
+  .kpi-icon {
+    @apply w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0;
+  }
+
+  .kpi-value {
+    @apply text-xl font-bold leading-none mt-0.5 tabular-nums;
+    color: #111827;
+  }
+
+  .kpi-title {
+    @apply text-[11px] font-semibold mt-1 leading-tight;
+    color: #6B7280;
+  }
+
+  .kpi-subtitle {
+    @apply text-[10px] mt-0.5;
+    color: #9CA3AF;
+  }
+
+  /* ── Trend Badge ─────────────────────────────── */
+  .trend-badge {
+    @apply flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full;
+  }
+
+  .trend-up   { background-color: #DCFCE7; color: #15803D; }
+  .trend-down { background-color: #FEE2E2; color: #DC2626; }
+  .trend-neutral { background-color: #F3F4F6; color: #6B7280; }
+
+  /* ── Utilization Strip ───────────────────────── */
+  .utilization-strip {
+    @apply bg-white rounded-2xl border p-5 mb-5 flex items-center gap-0;
+    border-color: #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .util-item  { @apply flex-1 flex justify-center; }
+  .util-divider {
+    @apply w-px h-20 flex-shrink-0;
+    background-color: #F3F4F6;
+  }
+  .util-stats { @apply flex-1 pl-6; }
+
+  .insight-row { @apply flex items-center justify-between text-xs; }
+  .insight-label { color: #6B7280; }
+  .insight-value { @apply font-semibold tabular-nums; color: #111827; }
+
+  /* ── Charts ──────────────────────────────────── */
+  .charts-row { @apply grid grid-cols-1 lg:grid-cols-5 gap-3; }
+  .chart-col-wide   { @apply lg:col-span-3; }
+  .chart-col-narrow { @apply lg:col-span-1; }
+
+  .chart-container {
+    @apply bg-white rounded-xl border p-3 h-full;
+    border-color: #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .chart-title   { @apply text-xs font-bold; color: #111827; }
+  .chart-subtitle { @apply text-[10px] mt-0.5; color: #9CA3AF; }
+
+  /* ── Section Headers ─────────────────────────── */
+  .section-header { @apply mt-4 mb-2; }
+  .section-title  { @apply text-sm font-bold; color: #111827; }
+  .section-subtitle { @apply text-[10px] mt-0.5; color: #9CA3AF; }
+
+  /* ── Demographics Row ────────────────────────── */
+  .demographics-row { @apply grid grid-cols-1 md:grid-cols-3 gap-3 items-start; }
+  .demographics-row > * { align-self: start; }
+
+  .org-classification-row { @apply grid grid-cols-1 lg:grid-cols-3 gap-3; }
+  .org-col-wide   { @apply lg:col-span-2; }
+  .org-col-narrow { @apply lg:col-span-1; }
+
+  /* ── Vendor KPI Pills ────────────────────────── */
+  .vendor-kpi-pill {
+    @apply flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border;
+    background-color: #F9FAFB;
+    border-color: #E5E7EB;
+  }
+
+  /* ── Period Tabs ─────────────────────────────── */
+  .period-tabs {
+    @apply flex items-center rounded-lg p-0.5 gap-0.5;
+    background-color: #F3F4F6;
+  }
+
+  .period-tab {
+    @apply text-[10px] font-semibold px-2.5 py-1 rounded-md transition-all duration-150 cursor-pointer;
+    color: #6B7280;
+  }
+
+  .period-tab-active {
+    @apply bg-white shadow-sm;
+    color: #111827;
+  }
+}

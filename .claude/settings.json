@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /tmp/cc-agent/66618401/project && ./node_modules/.bin/vite build 2>&1 | tail -5",
+            "timeout": 60,
+            "statusMessage": "Building project..."
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "NPM_CONFIG_PREFER_OFFLINE": "true"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run build*)",
+      "Bash(./node_modules/.bin/vite build*)",
+      "Bash(./node_modules/.bin/tsc*)",
+      "Bash(curl -s *)"
+    ]
+  }
+}
