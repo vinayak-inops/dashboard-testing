@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Core pages -->
+  <url>
+    <loc>https://inops.tech/</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://inops.tech/" />
+  </url>
+
+  <!-- Product pages -->
+  <url>
+    <loc>https://inops.tech/clms</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/zss</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/salary-plus</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Dashboard app pages -->
+  <url>
+    <loc>https://inops.tech/dashboard</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/attendance</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/vendor-performance</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/compliance</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/safety</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/risks</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/dashboard/onboarding</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Phase 5 — Proprietary Research Reports (citation magnets) -->
+  <url>
+    <loc>https://inops.tech/research</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/research/state-of-contract-labour-compliance-india-2026</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/research/overtime-leakage-benchmarks-indian-factories-2026</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/research/biometric-attendance-accuracy-report-india-2026</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Company pages -->
+  <url>
+    <loc>https://inops.tech/about</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/case-studies</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/contact</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/bgv</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/visitor-management</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/biometric</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- CLRA Compliance cluster — uncontested, high-intent blog posts -->
+  <url>
+    <loc>https://inops.tech/blog/clra-compliance-checklist</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/form-v-contractor-licence-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/form-xiii-register-clra</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/clra-registration-principal-employer</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/9-day-continuous-attendance-rule-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/clra-compliance-software</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- OT / Cost Control cluster — zero direct competition -->
+  <url>
+    <loc>https://inops.tech/blog/overtime-cost-control-manufacturing-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/ot-leakage-prevention-factory-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/ghost-ot-fraud-detection-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/factories-act-overtime-limit-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/overtime-management-biometric-attendance</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Biometric + Defence cluster — no SaaS competitor -->
+  <url>
+    <loc>https://inops.tech/blog/biometric-attendance-defence-site-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/zkteco-clms-integration-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/biometric-attendance-drdo-hal-contractor</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/multi-site-biometric-attendance-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Contractor Attendance cluster -->
+  <url>
+    <loc>https://inops.tech/blog/contractor-attendance-tracking-software-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/contractor-headcount-management-plant</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/gate-management-system-manufacturing-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://inops.tech/blog/turnstile-biometric-integration-clms</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Priority 8 articles — publish these first, in order, for maximum gap capture -->
+
+  <!-- Article 1: OT fraud — zero competition, highest commercial moat -->
+  <url>
+    <loc>https://inops.tech/blog/ot-cost-leakage-ghost-overtime-manufacturing-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Article 2: 9-day rule — specific CLRA risk, no software vendor owns it -->
+  <url>
+    <loc>https://inops.tech/blog/9-day-continuous-attendance-risk-clra-principal-employer</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Article 3: Form V + XIII combined guide — informational gap, high search volume -->
+  <url>
+    <loc>https://inops.tech/blog/form-v-form-xiii-clra-complete-compliance-guide</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Article 4: Defence / PSU vertical — InOps-exclusive, no competitor mentions defence -->
+  <url>
+    <loc>https://inops.tech/blog/contract-labour-defence-psu-drdo-hal-bhel</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Article 5: ZKTeco integration — InOps only vendor with this angle -->
+  <url>
+    <loc>https://inops.tech/blog/zkteco-biometric-clms-integration-multi-site-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Article 6: Contractor overbilling — zero competition -->
+  <url>
+    <loc>https://inops.tech/blog/contractor-billing-errors-biometric-overbilling-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Article 7: CLRA checklist — displaces non-software consultants currently ranking -->
+  <url>
+    <loc>https://inops.tech/blog/clra-compliance-checklist-12-obligations-principal-employer-2026</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Article 8: EWA + biometric — InOps is the only EWA-CLMS integrated platform -->
+  <url>
+    <loc>https://inops.tech/blog/earned-wage-access-biometric-attendance-contract-workers-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Camera / CCTV attendance cluster — own the CLRA+camera intersection, not generic face attendance -->
+
+  <!-- Pillar: the single article that owns the gap no competitor fills -->
+  <url>
+    <loc>https://inops.tech/blog/camera-attendance-clra-compliance-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Cluster: existing CCTV → contractor compliance (re-evaluation after India CCTV ban) -->
+  <url>
+    <loc>https://inops.tech/blog/existing-cctv-contractor-attendance-clms-integration</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Cluster: proxy attendance — concrete pain point for contract workforce -->
+  <url>
+    <loc>https://inops.tech/blog/proxy-attendance-prevention-contract-workers-manufacturing</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Cluster: India CCTV ban angle — Hikvision/Dahua replacement → ZSS opportunity -->
+  <url>
+    <loc>https://inops.tech/blog/india-cctv-ban-hikvision-dahua-manufacturing-clms-impact</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Cluster: face attendance OT verification — zero competition keyword -->
+  <url>
+    <loc>https://inops.tech/blog/face-recognition-attendance-ot-verification-manufacturing-india</loc>
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+</urlset>

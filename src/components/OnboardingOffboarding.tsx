@@ -307,7 +307,7 @@ function OnboardingTab() {
   const fillRate = ((408 / 532) * 100).toFixed(1);
 
   const kpis: KPI[] = [
-    { title: 'Total Onboarded (YTD)', value: 2756,   sub: 'Year to date', color: '#3B82F6', icon: UserPlus,  trend: 14  },
+    { title: 'Total Onboarded (YTD)', value: 2956,   sub: 'Year to date', color: '#3B82F6', icon: UserPlus,  trend: 14  },
     { title: 'New Joiners MTD',       value: 250,    sub: 'This month',   color: '#10B981', icon: Users,     trend: 14  },
     { title: 'New Joiners QTD',       value: 712,    sub: 'This quarter', color: '#8B5CF6', icon: Users,     trend: 8   },
     { title: 'Offer-to-Join Rate',    value: `${convRate}%`, sub: 'Conversion',  color: '#F59E0B', icon: Target              },
