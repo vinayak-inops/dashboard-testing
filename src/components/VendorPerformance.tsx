@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Building2, Users, ShieldCheck, ShieldAlert, AlertTriangle, Clock,
-  AlertCircle, ChevronUp, ChevronDown,
+  AlertCircle, ChevronUp, ChevronDown, BarChart2, Layers,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -786,13 +786,48 @@ export default function VendorPerformance() {
         )}
       </div>
 
-      {/* Vendor table — full width */}
-      <div className="mb-4">
-        <CombinedVendorTable vendors={vendors} />
+      {/* Section Tabs */}
+      {(() => {
+        const TABS: { key: 'overview' | 'workorders'; label: string; icon: React.ElementType }[] = [
+          { key: 'overview',   label: 'Vendor Overview', icon: BarChart2 },
+          { key: 'workorders', label: 'Work Orders',      icon: Layers    },
+        ];
+        return <VendorSectionTabs vendors={vendors} workOrders={workOrders} woLoading={woLoading} />;
+      })()}
+    </div>
+  );
+}
+
+type VendorSectionTab = 'overview' | 'workorders';
+
+function VendorSectionTabs({ vendors, workOrders, woLoading }: { vendors: VendorRow[]; workOrders: WorkOrder[]; woLoading: boolean }) {
+  const [tab, setTab] = useState<VendorSectionTab>('overview');
+
+  const TABS: { key: VendorSectionTab; label: string; icon: React.ElementType }[] = [
+    { key: 'overview',   label: 'Vendor Overview', icon: BarChart2 },
+    { key: 'workorders', label: 'Work Orders',      icon: Layers    },
+  ];
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-1 flex-wrap p-1 rounded-xl mb-1" style={{ backgroundColor: '#F3F4F6' }}>
+        {TABS.map(({ key, label, icon: TabIcon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-semibold transition-all duration-150 cursor-pointer flex-1 justify-center"
+            style={tab === key
+              ? { backgroundColor: '#FFFFFF', color: '#2563EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+              : { backgroundColor: 'transparent', color: '#6B7280' }}
+          >
+            <TabIcon size={13} />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Work Orders — full width */}
-      <WorkOrdersSection workOrders={workOrders} loading={woLoading} />
+      {tab === 'overview'   && <CombinedVendorTable vendors={vendors} />}
+      {tab === 'workorders' && <WorkOrdersSection workOrders={workOrders} loading={woLoading} />}
     </div>
   );
 }

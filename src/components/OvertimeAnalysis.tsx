@@ -67,7 +67,7 @@ function DeptBar({sortKey}:{sortKey:SortKey}){
   const maxV=Math.max(...sorted.map(d=>d[sortKey]));
   const color=sortKey==='cost'?'#6EE7B7':sortKey==='anomalies'?'#FCA5A5':'#93C5FD';
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 240 }}>
       {sorted.map((d,i)=>{
         const val=d[sortKey], pct=(val/maxV)*100;
         return (
@@ -114,7 +114,7 @@ function EmployeeTable({deptF,contF}:{deptF:string;contF:string}){
           </button>
           <span>Contractor</span><span></span>
         </div>
-        <div className="divide-y" style={{borderColor:'#F3F4F6'}}>
+        <div className="divide-y overflow-y-auto" style={{ borderColor: '#F3F4F6', maxHeight: 280 }}>
           {rows.map((e,i)=>(
             <div key={e.id}>
               <div className="grid px-2.5 py-2 cursor-pointer transition-colors hover:bg-gray-50"
@@ -159,7 +159,7 @@ function ContractorOT(){
   const max=Math.max(...CONTRACTOR_OT.map(c=>c.hours));
   const COLORS=['#93C5FD','#C4B5FD','#FDE68A','#6EE7B7','#FCA5A5'];
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 220 }}>
       {CONTRACTOR_OT.map((c,i)=>(
         <div key={i}>
           <div className="flex items-center justify-between mb-0.5">
@@ -183,7 +183,7 @@ function ContractorOT(){
 function SkillOT(){
   const max=Math.max(...SKILL_OT.map(s=>s.hours));
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 220 }}>
       {SKILL_OT.map((s,i)=>(
         <div key={i}>
           <div className="flex items-center justify-between mb-0.5">

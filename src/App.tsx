@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users,
   UserCheck,
@@ -7,14 +7,20 @@ import {
   Activity,
   Building2,
   RefreshCw,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Bell,
   Settings,
   LayoutDashboard,
   PieChart,
   ShieldCheck,
+  TrendingUp,
+  BarChart2,
+  GitBranch,
+  CalendarCheck,
 } from 'lucide-react';
 import { supabase, WorkforceMetrics, WorkforceTrend, WorkforceGender, WorkforceAgeGroup, WorkforceExperienceBand, WorkforceOrgDistribution, WorkforceEmploymentClassification, EmployeeFilter } from './lib/supabase';
+import { apiPost } from './lib/api';
 import KPICard from './components/KPICard';
 import CombinedKPIRow from './components/CombinedKPIRow';
 import EmployeeDrawer from './components/EmployeeDrawer';
@@ -38,6 +44,8 @@ import LeaveApprovalTrend from './components/LeaveApprovalTrend';
 
 export default function App() {
   const [activePage, setActivePage] = useState<'workforce' | 'attendance' | 'vendor' | 'demographics' | 'safety' | 'risks' | 'onboarding'>('workforce');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [workforceTab, setWorkforceTab] = useState<'trend' | 'demographics' | 'org' | 'leave'>('trend');
   const [metrics, setMetrics] = useState<WorkforceMetrics | null>(null);
   const [metricsError, setMetricsError] = useState<string | null>(null);
   const [demographicsError, setDemographicsError] = useState<string | null>(null);
@@ -64,25 +72,23 @@ export default function App() {
     setEmploymentError(null);
     setTrendError(null);
 
-    const [apiRes, compRes, trendRes] = await Promise.all([
-      fetch('https://devai.clms.in/webhook/clms-dashboard-new', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'cards', tenantCode: 'AAL' }),
-      }).then(r => r.json()).catch((err) => ({ __error: err?.message ?? 'Network error' })),
-      fetch('https://devai.clms.in/webhook/clms-dashboard-new', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'workforce_composition', tenantCode: 'AAL' }),
-      }).then(r => r.json()).catch((err) => ({ __error: err?.message ?? 'Network error' })),
+    const [cardsRes, trendRes, demoRes, orgRes, supabaseTrend] = await Promise.all([
+      apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce cards' })
+        .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
+      apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce Trend' })
+        .catch(() => ({ data: null as unknown as Record<string, unknown> })),
+      apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce GenAgeExpSkill' })
+        .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
+      apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce Org Distribution' })
+        .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
       supabase.from('workforce_trend').select('*').order('created_at', { ascending: true }),
     ]);
 
-    if (apiRes?.__error) {
-      setMetricsError(`Failed to load KPI data: ${apiRes.__error}`);
+    if ((cardsRes as { __error?: string })?.__error) {
+      setMetricsError(`Failed to load KPI data: ${(cardsRes as { __error: string }).__error}`);
       setMetrics(null);
-    } else if (apiRes?.data) {
-      const d = apiRes.data;
+    } else if (cardsRes?.data) {
+      const d = cardsRes.data;
       setMetrics({
         id: 'api',
         snapshot_date: d.snapshotDate ?? new Date().toISOString().split('T')[0],
@@ -111,12 +117,11 @@ export default function App() {
 
     let trendFromApi = false;
 
-    if (compRes?.__error) {
-      setDemographicsError(`Failed to load demographics: ${compRes.__error}`);
-      setOrgError(`Failed to load organizational distribution: ${compRes.__error}`);
-      setEmploymentError(`Failed to load employment classification: ${compRes.__error}`);
-    } else if (compRes?.data) {
-      const c = compRes.data;
+    if ((demoRes as { __error?: string })?.__error) {
+      setDemographicsError(`Failed to load demographics: ${(demoRes as { __error: string }).__error}`);
+      setEmploymentError(`Failed to load employment classification: ${(demoRes as { __error: string }).__error}`);
+    } else if (demoRes?.data) {
+      const c = demoRes.data;
       if (c.genderDistribution?.length) {
         const totalEmployees = Number(c.genderDistribution[0]?.totalEmployees ?? 0);
         if (totalEmployees > 0) setApiTotal(totalEmployees);
@@ -151,8 +156,16 @@ export default function App() {
           })));
       } else
         setEmploymentError('No employment classification data returned from the API.');
+    } else {
+      setDemographicsError('No demographics data returned from the API.');
+      setEmploymentError('No employment classification data returned from the API.');
+    }
 
-      // Org distribution — flatten all dimension arrays from the API
+    // Org Distribution — from dedicated subtype
+    if ((orgRes as { __error?: string })?.__error) {
+      setOrgError(`Failed to load organizational distribution: ${(orgRes as { __error: string }).__error}`);
+    } else if (orgRes?.data) {
+      const od = orgRes.data;
       const ORG_DIMENSION_KEYS: Array<{ apiKey: string; dimension: string; labelField: string }> = [
         { apiKey: 'subsidiaryDistribution',    dimension: 'subsidiary',     labelField: 'subsidiaryName'    },
         { apiKey: 'regionDistribution',        dimension: 'region',         labelField: 'regionName'        },
@@ -164,7 +177,7 @@ export default function App() {
       const orgRows: WorkforceOrgDistribution[] = [];
       let orgIdx = 0;
       for (const { apiKey, dimension, labelField } of ORG_DIMENSION_KEYS) {
-        const arr = c[apiKey];
+        const arr = od[apiKey];
         if (Array.isArray(arr) && arr.length > 0) {
           arr.forEach((row: Record<string, unknown>, i: number) => {
             const label = String(row[labelField] ?? row['name'] ?? row['label'] ?? '');
@@ -177,25 +190,7 @@ export default function App() {
       if (orgRows.length > 0) setOrgData(orgRows);
       else setOrgError('No organizational distribution data returned from the API.');
 
-      // Workforce trend
-      const trendArr = c.workforceTrend ?? [];
-      if (trendArr.length > 0) {
-        setTrend(trendArr.map((d: { monthYear: string; totalWorkforce: number; activeWorkforce: number; newJoiners: number; exits: number; utilizationPct: number }, i: number) => ({
-          id: String(i),
-          month_year: d.monthYear,
-          total_workforce: d.totalWorkforce,
-          active_workforce: d.activeWorkforce,
-          new_joiners: d.newJoiners,
-          exits: d.exits,
-          utilization_pct: d.utilizationPct,
-          created_at: '',
-        })));
-        setTrendError(null);
-        trendFromApi = true;
-      }
-
-      // Contractor panel data
-      const contractorArr = c.contractorDistribution ?? c.contractorDetails ?? c.contractors ?? [];
+      const contractorArr = od.contractorDistribution ?? od.contractorDetails ?? od.contractors ?? [];
       if (Array.isArray(contractorArr) && contractorArr.length > 0) {
         setContractorData(contractorArr.map((r: Record<string, unknown>, i: number) => ({
           id: String(i),
@@ -207,17 +202,32 @@ export default function App() {
         })));
       }
     } else {
-      setDemographicsError('No demographics data returned from the API.');
       setOrgError('No organizational distribution data returned from the API.');
-      setEmploymentError('No employment classification data returned from the API.');
     }
 
-    // Fall back to Supabase for trend data only if API didn't return it
-    if (!trendFromApi) {
-      if (trendRes.error) {
-        setTrendError(`Failed to load trend data: ${trendRes.error.message}`);
-      } else if (trendRes.data && trendRes.data.length > 0) {
-        setTrend(trendRes.data);
+    // Workforce Trend — from dedicated subtype, fallback to Supabase
+    const trendApiData = trendRes?.data;
+    const trendArr = trendApiData ? (
+      (trendApiData as Record<string, unknown>).workforceGrowthTrend ??
+      (trendApiData as Record<string, unknown>).workforceTrend ?? []
+    ) : [];
+    if (Array.isArray(trendArr) && trendArr.length > 0) {
+      setTrend((trendArr as { month?: string; monthYear?: string; total?: number; totalWorkforce?: number; active?: number; activeWorkforce?: number; joined?: number; newJoiners?: number; exited?: number; exits?: number }[]).map((d, i) => ({
+        id: String(i),
+        month_year:       d.month          ?? d.monthYear       ?? '',
+        total_workforce:  d.total          ?? d.totalWorkforce  ?? 0,
+        active_workforce: d.active         ?? d.activeWorkforce ?? 0,
+        new_joiners:      d.joined         ?? d.newJoiners      ?? 0,
+        exits:            d.exited         ?? d.exits           ?? 0,
+        utilization_pct:  0,
+        created_at: '',
+      })));
+      setTrendError(null);
+    } else {
+      if (supabaseTrend.error) {
+        setTrendError(`Failed to load trend data: ${supabaseTrend.error.message}`);
+      } else if (supabaseTrend.data && supabaseTrend.data.length > 0) {
+        setTrend(supabaseTrend.data);
       } else {
         setTrendError('No workforce trend data available.');
       }
@@ -237,12 +247,12 @@ export default function App() {
   return (
     <div className="dashboard-root">
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarCollapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-mark">
+          <div className="logo-mark flex-shrink-0">
             <LayoutDashboard size={18} strokeWidth={1.75} />
           </div>
-          <div>
+          <div className="logo-text flex-1 min-w-0">
             <p className="logo-title">CLMS</p>
             <p className="logo-sub">CXO Dashboard</p>
           </div>
@@ -250,50 +260,52 @@ export default function App() {
 
         <nav className="sidebar-nav">
           <p className="nav-section-label">Overview</p>
-          <a href="#" className={`nav-item${activePage === 'workforce' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('workforce'); }}>
-            <LayoutDashboard size={15} />
-            Workforce Summary
-          </a>
-          <a href="#" className={`nav-item${activePage === 'attendance' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('attendance'); }}>
-            <Users size={15} />
-            Attendance Summary
-          </a>
-          <a href="#" className={`nav-item${activePage === 'vendor' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('vendor'); }}>
-            <Activity size={15} />
-            Vendor Performance
-          </a>
-          <a href="#" className={`nav-item${activePage === 'demographics' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('demographics'); }}>
-            <PieChart size={15} />
-            Compliance Governance
-          </a>
-          <a href="#" className={`nav-item${activePage === 'safety' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('safety'); }}>
-            <ShieldCheck size={15} />
-            Safety &amp; Welfare
-          </a>
-          <a href="#" className={`nav-item${activePage === 'risks' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('risks'); }}>
-            <UserX size={15} />
-            Risks &amp; Alerts
-          </a>
-          <a href="#" className={`nav-item${activePage === 'onboarding' ? ' active' : ''}`} onClick={(e) => { e.preventDefault(); setActivePage('onboarding'); }}>
-            <UserCheck size={15} />
-            Onboarding &amp; Exit
-          </a>
+          {[
+            { page: 'workforce',   icon: LayoutDashboard, label: 'Workforce Summary'    },
+            { page: 'attendance',  icon: Users,            label: 'Attendance Summary'   },
+            { page: 'vendor',      icon: Activity,         label: 'Vendor Performance'   },
+            { page: 'demographics',icon: PieChart,         label: 'Compliance Governance'},
+            { page: 'safety',      icon: ShieldCheck,      label: 'Safety & Welfare'     },
+            { page: 'risks',       icon: UserX,            label: 'Risks & Alerts'       },
+            { page: 'onboarding',  icon: UserCheck,        label: 'Onboarding & Exit'    },
+          ].map(({ page, icon: Icon, label }) => (
+            <a
+              key={page}
+              href="#"
+              title={sidebarCollapsed ? label : undefined}
+              className={`nav-item${activePage === page ? ' active' : ''}`}
+              onClick={(e) => { e.preventDefault(); setActivePage(page as typeof activePage); }}
+            >
+              <Icon size={15} className="flex-shrink-0" />
+              <span className="nav-label">{label}</span>
+            </a>
+          ))}
         </nav>
 
         <div className="sidebar-footer">
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setSidebarCollapsed(c => !c)}
+            className="w-full flex items-center justify-center mb-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+            style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {!sidebarCollapsed && <span className="ml-1.5 text-[11px] font-medium">Collapse</span>}
+          </button>
           <div className="user-pill">
             <div className="user-avatar">CX</div>
-            <div className="flex-1 min-w-0">
+            <div className="user-info flex-1 min-w-0">
               <p className="user-name">CXO Admin</p>
               <p className="user-role">Executive</p>
             </div>
-            <Settings size={13} className="flex-shrink-0" style={{ color: '#9CA3AF' }} />
+            <Settings size={13} className="user-settings flex-shrink-0" style={{ color: '#9CA3AF' }} />
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className={`main-content${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
         {/* Top Bar */}
         <header className="topbar">
           <div className="topbar-left">
@@ -405,66 +417,110 @@ export default function App() {
               {/* Row 2: 3 combined KPI cards */}
               <CombinedKPIRow metrics={metrics} onAction={setDrawerFilter} />
             </>
-          ) : loading ? null : (
+          ) : loading ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                {[0,1,2].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />)}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                {[0,1,2].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />)}
+              </div>
+            </>
+          ) : (
             <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-2">
               <UserX size={15} className="flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
               <p className="text-xs font-semibold" style={{ color: '#DC2626' }}>No KPI data available.</p>
             </div>
           )}
 
-          {/* Bottom Charts Row */}
-          <div className="charts-row">
-            <div className="chart-col-wide">
-              <TrendChart data={trend} error={trendError} />
-            </div>
-            {metrics && (
-              <div className="chart-col-narrow lg:col-span-2">
-                <MTDSummary metrics={metrics} />
-              </div>
-            )}
+          {/* ── Section Tabs ── */}
+          <div className="mt-4 mb-3 flex items-center gap-1 flex-wrap p-1 rounded-xl" style={{ backgroundColor: '#F3F4F6' }}>
+            {([
+              { key: 'trend',       label: 'Growth Trend',       icon: TrendingUp     },
+              { key: 'demographics',label: 'Demographics',        icon: BarChart2      },
+              { key: 'org',         label: 'Org Distribution',    icon: GitBranch      },
+              { key: 'leave',       label: 'Leave Analytics',     icon: CalendarCheck  },
+            ] as { key: typeof workforceTab; label: string; icon: React.ElementType }[]).map(({ key, label, icon: TabIcon }) => (
+              <button
+                key={key}
+                onClick={() => setWorkforceTab(key)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-semibold transition-all duration-150 cursor-pointer flex-1 justify-center"
+                style={workforceTab === key
+                  ? { backgroundColor: '#FFFFFF', color: '#2563EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+                  : { backgroundColor: 'transparent', color: '#6B7280' }}
+              >
+                <TabIcon size={13} />
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* Demographics Row */}
-          <div className="section-header">
-            <h2 className="section-title">Workforce Demographics</h2>
-            <p className="section-subtitle">Composition by gender, age, and experience</p>
-          </div>
-          {demographicsError ? (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-5 py-4 flex items-start gap-3">
-              <UserX size={18} className="flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
-              <div>
-                <p className="text-sm font-semibold" style={{ color: '#DC2626' }}>Unable to load demographics data</p>
-                <p className="text-xs mt-0.5" style={{ color: '#B91C1C' }}>{demographicsError}</p>
+          {/* ── Tab Panels ── */}
+          {workforceTab === 'trend' && (
+            loading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <div className="lg:col-span-3 h-52 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                <div className="lg:col-span-2 h-52 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
               </div>
-            </div>
-          ) : (
-            <div className="demographics-row">
-              <GenderChart data={genderData} total={apiTotal || undefined} />
-              <AgeGroupChart data={ageData} />
-              <ExperienceBandChart data={expData} />
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <div className="lg:col-span-3">
+                  <TrendChart data={trend} error={trendError} />
+                </div>
+                <div className="lg:col-span-2">
+                  {metrics && <MTDSummary metrics={metrics} />}
+                </div>
+              </div>
+            )
           )}
 
-          {/* Org Distribution + Employment Classification */}
-          <div className="section-header">
-            <h2 className="section-title">Organizational Distribution &amp; Employment Classification</h2>
-            <p className="section-subtitle">Concentration by structure and skill category</p>
-          </div>
-          <div className="org-classification-row">
-            <div className="org-col-wide">
-              <OrgDistributionChart data={orgData} contractors={contractorData} error={orgError} />
-            </div>
-            <div className="org-col-narrow">
-              <EmploymentClassificationChart data={employmentData} error={employmentError} total={apiTotal || undefined} />
-            </div>
-          </div>
+          {workforceTab === 'demographics' && (
+            loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[0,1,2].map(i => <div key={i} className="h-60 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />)}
+              </div>
+            ) : demographicsError ? (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-5 py-4 flex items-start gap-3">
+                <UserX size={18} className="flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: '#DC2626' }}>Unable to load demographics data</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#B91C1C' }}>{demographicsError}</p>
+                </div>
+              </div>
+            ) : (genderData.length || ageData.length || expData.length) ? (
+              <div className="demographics-row">
+                <GenderChart data={genderData} total={apiTotal || undefined} />
+                <AgeGroupChart data={ageData} />
+                <ExperienceBandChart data={expData} />
+              </div>
+            ) : (
+              <div className="rounded-xl p-8 text-center" style={{ backgroundColor: '#F9FAFB', border: '1px dashed #E5E7EB' }}>
+                <p className="text-sm" style={{ color: '#9CA3AF' }}>No demographics data returned.</p>
+              </div>
+            )
+          )}
 
-          {/* Leave Analytics */}
-          <div className="section-header">
-            <h2 className="section-title">Leave Analytics</h2>
-            <p className="section-subtitle">Approval trends, rejection reasons and supervisor SLA compliance</p>
-          </div>
-          <LeaveApprovalTrend />
+          {workforceTab === 'org' && (
+            loading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="lg:col-span-2 h-72 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+                <div className="h-72 rounded-xl animate-pulse" style={{ backgroundColor: '#F3F4F6' }} />
+              </div>
+            ) : (
+              <div className="org-classification-row">
+                <div className="org-col-wide">
+                  <OrgDistributionChart data={orgData} contractors={contractorData} error={orgError} />
+                </div>
+                <div className="org-col-narrow">
+                  <EmploymentClassificationChart data={employmentData} error={employmentError} total={apiTotal || undefined} />
+                </div>
+              </div>
+            )
+          )}
+
+          {workforceTab === 'leave' && (
+            <LeaveApprovalTrend />
+          )}
 
             </>
           )}

@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Users, AlertTriangle, AlertCircle, Clock, Building2, TrendingUp, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, AlertTriangle, AlertCircle, Clock, Building2, TrendingUp, ChevronRight, BarChart2, Activity, Timer, GitMerge } from 'lucide-react';
 import { EmployeeFilter } from '../lib/supabase';
+import { apiPost } from '../lib/api';
 import EmployeeDrawer from './EmployeeDrawer';
 import LateLeavingTrend from './LateLeavingTrend';
 import OvertimeAnalysis from './OvertimeAnalysis';
@@ -290,8 +291,6 @@ const METRIC_LABEL: Record<Metric, string> = {
   shift:      'Shift',
 };
 
-const API_URL = 'https://devai.clms.in/webhook/clms-dashboard-new';
-
 // ── Shift Distribution Chart (quarterly-style horizontal bars) ────────────────
 
 const SHIFT_COLORS = ['#DB2777','#EC4899','#F472B6','#BE185D','#9D174D','#831843','#FBCFE8'];
@@ -400,10 +399,10 @@ function OrgAttendanceChart() {
     setRows([]);
     setLoading(true);
     setError(null);
-    fetch(API_URL, {
+    fetch('https://devai.clms.in/webhook/clms-dashboard-new', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ type: 'attendance', metric: activeMetric, dimension: activeDim, tenantCode: 'AAL' }),
+      body:    JSON.stringify({ type: 'attendance', subtype: 'Attendance Org Distribution', metric: activeMetric, dimension: activeDim, tenantCode: 'AAL' }),
       signal:  controller.signal,
     })
       .then(r => r.json())
@@ -1361,14 +1360,17 @@ export default function AttendanceSummary() {
   const fetchData = async () => {
     try {
       setFetchError(null);
-      const res = await fetch(API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ type: 'attendance', tenantCode: 'AAL' }),
-      });
-      if (!res.ok) { setFetchError(`API error ${res.status}: ${res.statusText}`); return; }
-      const json = await res.json();
-      const raw  = json?.data;
+
+      const [cardsJson, trendJson, otJson] = await Promise.all([
+        apiPost<{ data: Record<string, unknown> }>({ type: 'attendance', subtype: 'Attendance cards' }),
+        apiPost<{ data: Record<string, unknown> }>({ type: 'attendance', subtype: 'Attendance Trend' }),
+        apiPost<{ data: Record<string, unknown> }>({ type: 'attendance', subtype: 'Attendance OT Compensation' }),
+      ]);
+
+      const raw  = cardsJson?.data;
+      const trRaw = trendJson?.data;
+      const otRaw = otJson?.data;
+
       if (!raw) { setFetchError('API returned no data.'); return; }
 
       const ov  = raw.attendanceOverview      ?? {};
@@ -1376,10 +1378,14 @@ export default function AttendanceSummary() {
       const shifts: { shiftCode?: string; shiftName: string; totalEmployees: number; male: number; female: number }[] =
         raw.shiftWiseAttendance ?? [];
       const live = raw.employeesInsidePremises ?? {};
-      const tr   = raw.attendanceTrends        ?? {};
 
+      // Trends come from the dedicated Attendance Trend subtype
+      const tr = (trRaw?.attendanceTrends ?? trRaw?.trends ?? raw.attendanceTrends) ?? {};
+
+      // Contractor OT data from dedicated OT Compensation subtype
+      const otSource = otRaw ?? raw;
       const rawContractors: { contractor: string; workOrder: string; totalEmployees: number; presentEmployees: number; overtimeHours: number }[] =
-        raw.contractorAttendance ?? [];
+        otSource.contractorAttendance ?? [];
       const contractorMap = new Map<string, WOAnalytics[]>();
       for (const c of rawContractors) {
         if (!contractorMap.has(c.contractor)) contractorMap.set(c.contractor, []);
@@ -1553,17 +1559,54 @@ export default function AttendanceSummary() {
         }
       </div>
 
-      <OrgAttendanceChart />
-
-      <AttendanceTrendSection trends={data?.trends} />
-
-      <LateLeavingTrend />
-
-      <OvertimeAnalysis />
-
-      <AttendanceOTCorrelationChart contractors={data?.contractors ?? []} />
+      {/* ── Section Tabs ── */}
+      <AttendanceSectionTabs data={data} />
 
       <EmployeeDrawer filter={drawerFilter} onClose={() => setDrawerFilter(null)} />
+    </div>
+  );
+}
+
+// ── Section Tabs component ────────────────────────────────────────────────────
+
+type AttendanceTab = 'org' | 'trend' | 'late' | 'overtime' | 'shortfall';
+
+function AttendanceSectionTabs({ data }: { data: DashboardData | null }) {
+  const [tab, setTab] = useState<AttendanceTab>('org');
+
+  const TABS: { key: AttendanceTab; label: string; icon: React.ElementType }[] = [
+    { key: 'org',       label: 'Org Distribution',  icon: BarChart2  },
+    { key: 'trend',     label: 'Attendance Trend',   icon: TrendingUp },
+    { key: 'late',      label: 'Late / Early Out',   icon: Timer      },
+    { key: 'overtime',  label: 'Overtime',           icon: Activity   },
+    { key: 'shortfall', label: 'Shortfall & OT',     icon: GitMerge   },
+  ];
+
+  return (
+    <div className="mt-4">
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 flex-wrap p-1 rounded-xl mb-1" style={{ backgroundColor: '#F3F4F6' }}>
+        {TABS.map(({ key, label, icon: TabIcon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-semibold transition-all duration-150 cursor-pointer flex-1 justify-center"
+            style={tab === key
+              ? { backgroundColor: '#FFFFFF', color: '#2563EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+              : { backgroundColor: 'transparent', color: '#6B7280' }}
+          >
+            <TabIcon size={13} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Panels */}
+      {tab === 'org'       && <OrgAttendanceChart />}
+      {tab === 'trend'     && <AttendanceTrendSection trends={data?.trends} />}
+      {tab === 'late'      && <LateLeavingTrend />}
+      {tab === 'overtime'  && <OvertimeAnalysis />}
+      {tab === 'shortfall' && <AttendanceOTCorrelationChart contractors={data?.contractors ?? []} />}
     </div>
   );
 }

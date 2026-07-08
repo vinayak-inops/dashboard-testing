@@ -77,7 +77,7 @@ export default function EmploymentClassificationChart({ data, error, total: tota
       </div>
 
       {/* Legend rows */}
-      <div className="flex flex-col gap-1.5 flex-1">
+      <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: 220 }}>
         {sorted.map((d, i) => (
           <div key={d.id} className="rounded-lg border px-2.5 py-1.5" style={BG_STYLES[i]}>
             <div className="flex items-center justify-between">

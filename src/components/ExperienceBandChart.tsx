@@ -28,7 +28,7 @@ export default function ExperienceBandChart({ data }: ExperienceBandChartProps) 
         ))}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 overflow-y-auto pr-1" style={{ maxHeight: 220 }}>
         {sorted.map((d, i) => (
           <div key={d.id} className="flex items-center gap-2">
             <span className="text-[10px] w-16 flex-shrink-0 text-right leading-tight" style={{ color: '#6B7280' }}>

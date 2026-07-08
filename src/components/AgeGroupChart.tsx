@@ -17,7 +17,7 @@ export default function AgeGroupChart({ data }: AgeGroupChartProps) {
         <p className="chart-subtitle">Headcount across age bands</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 220 }}>
         {sorted.map((d, i) => (
           <div key={d.id}>
             <div className="flex items-center justify-between mb-0.5">
