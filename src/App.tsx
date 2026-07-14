@@ -19,7 +19,7 @@ import {
   GitBranch,
   CalendarCheck,
 } from 'lucide-react';
-import { supabase, WorkforceMetrics, WorkforceTrend, WorkforceGender, WorkforceAgeGroup, WorkforceExperienceBand, WorkforceOrgDistribution, WorkforceEmploymentClassification, EmployeeFilter } from './lib/supabase';
+import { WorkforceMetrics, WorkforceTrend, WorkforceGender, WorkforceAgeGroup, WorkforceExperienceBand, WorkforceOrgDistribution, WorkforceEmploymentClassification, EmployeeFilter } from './lib/supabase';
 import { apiPost } from './lib/api';
 import KPICard from './components/KPICard';
 import CombinedKPIRow from './components/CombinedKPIRow';
@@ -72,16 +72,15 @@ export default function App() {
     setEmploymentError(null);
     setTrendError(null);
 
-    const [cardsRes, trendRes, demoRes, orgRes, supabaseTrend] = await Promise.all([
+    const [cardsRes, trendRes, demoRes, orgRes] = await Promise.all([
       apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce cards' })
         .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
       apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce Trend' })
-        .catch(() => ({ data: null as unknown as Record<string, unknown> })),
+        .catch((err: Error) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
       apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce GenAgeExpSkill' })
         .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
       apiPost<{ data: Record<string, unknown> }>({ type: 'workforce_composition', subtype: 'workforce Org Distribution' })
         .catch((err) => ({ __error: err?.message ?? 'Network error', data: null as unknown as Record<string, unknown> })),
-      supabase.from('workforce_trend').select('*').order('created_at', { ascending: true }),
     ]);
 
     if ((cardsRes as { __error?: string })?.__error) {
@@ -91,31 +90,29 @@ export default function App() {
       const d = cardsRes.data;
       setMetrics({
         id: 'api',
-        snapshot_date: d.snapshotDate ?? new Date().toISOString().split('T')[0],
+        snapshot_date: String(d.snapshotDate ?? new Date().toISOString().split('T')[0]),
         department: 'All',
         region: 'All',
         created_at: new Date().toISOString(),
-        total_workforce: d.totalWorkforce,
-        active_workforce: d.activeWorkforce,
-        inactive_workforce: d.inactiveWorkforce,
-        present_today: d.presentToday,
-        total_contract_workers: d.totalContractWorkers,
-        total_vendors_contractors: d.totalVendorsContractors,
-        new_workers_mtd: d.newWorkersMTD,
-        exited_workers_mtd: d.exitedWorkersMTD,
-        new_workers_qtd: d.newWorkersQTD,
-        exited_workers_qtd: d.exitedWorkersQTD,
-        new_workers_ytd: d.newWorkersYTD,
-        exited_workers_ytd: d.exitedWorkersYTD,
-        workforce_growth_pct: d.workforceGrowthPct,
-        workforce_utilization_pct: d.workforceUtilizationPct,
+        total_workforce:          Number(d.totalWorkforce          ?? 0),
+        active_workforce:         Number(d.activeWorkforce         ?? 0),
+        inactive_workforce:       Number(d.inactiveWorkforce       ?? 0),
+        present_today:            Number(d.presentToday            ?? 0),
+        total_contract_workers:   Number(d.totalContractWorkers    ?? 0),
+        total_vendors_contractors:Number(d.totalVendorsContractors ?? 0),
+        new_workers_mtd:          Number(d.newWorkersMTD           ?? 0),
+        exited_workers_mtd:       Number(d.workersLeftMTD ?? d.exitedWorkersMTD ?? 0),
+        new_workers_qtd:          Number(d.newWorkersQTD                         ?? 0),
+        exited_workers_qtd:       Number(d.workersLeftQTD ?? d.exitedWorkersQTD  ?? 0),
+        new_workers_ytd:          Number(d.newWorkersYTD                         ?? 0),
+        exited_workers_ytd:       Number(d.workersLeftYTD ?? d.exitedWorkersYTD  ?? 0),
+        workforce_growth_pct:     Number(d.workforceGrowthPct      ?? 0),
+        workforce_utilization_pct:Number(d.workforceUtilizationPct ?? 0),
       });
     } else {
       setMetricsError('No KPI data returned from the API.');
       setMetrics(null);
     }
-
-    let trendFromApi = false;
 
     if ((demoRes as { __error?: string })?.__error) {
       setDemographicsError(`Failed to load demographics: ${(demoRes as { __error: string }).__error}`);
@@ -126,23 +123,34 @@ export default function App() {
         const totalEmployees = Number(c.genderDistribution[0]?.totalEmployees ?? 0);
         if (totalEmployees > 0) setApiTotal(totalEmployees);
         setGenderData(c.genderDistribution
-          .map((d: { gender: string; count: number; pct: number }, i: number) => ({
-            id: String(i), snapshot_date: '', created_at: '', gender: d.gender, count: d.count, pct: d.pct,
+          .map((d: Record<string, unknown>, i: number) => ({
+            id: String(i), snapshot_date: '', created_at: '',
+            gender: String(d.gender ?? ''),
+            count:  Number(d.count ?? 0),
+            pct:    Number(d.percentage ?? d.pct ?? 0),
           })));
       }
       if (c.ageDistribution?.length)
         setAgeData(c.ageDistribution
-          .filter((d: { count: number }) => d.count > 0)
-          .map((d: { ageGroup: string; count: number; pct: number; sortOrder: number }, i: number) => ({
-            id: String(i), snapshot_date: '', created_at: '', age_group: d.ageGroup, count: d.count, pct: d.pct, sort_order: d.sortOrder,
+          .filter((d: Record<string, unknown>) => Number(d.count ?? 0) > 0)
+          .map((d: Record<string, unknown>, i: number) => ({
+            id: String(i), snapshot_date: '', created_at: '',
+            age_group:  String(d.age_group ?? d.ageGroup ?? ''),
+            count:      Number(d.count ?? 0),
+            pct:        Number(d.percentage ?? d.pct ?? 0),
+            sort_order: Number(d.sortOrder ?? d.sort_order ?? i + 1),
           })));
       if (c.experienceDistribution?.length)
         setExpData(c.experienceDistribution
-          .filter((d: { count: number }) => d.count > 0)
-          .map((d: { band: string; count: number; pct: number; sortOrder: number }, i: number) => ({
-            id: String(i), snapshot_date: '', created_at: '', band: d.band, count: d.count, pct: d.pct, sort_order: d.sortOrder,
+          .filter((d: Record<string, unknown>) => Number(d.count ?? 0) > 0)
+          .map((d: Record<string, unknown>, i: number) => ({
+            id: String(i), snapshot_date: '', created_at: '',
+            band:       String(d.band ?? ''),
+            count:      Number(d.count ?? 0),
+            pct:        Number(d.percentage ?? d.pct ?? 0),
+            sort_order: Number(d.sortOrder ?? d.sort_order ?? i + 1),
           })));
-      const empClassSrc = c.skillLevelDistribution ?? c.employmentClassification;
+      const empClassSrc = c.skillDistribution ?? c.skillLevelDistribution ?? c.employmentClassification;
       if (empClassSrc?.length) {
         // API fields are: workforceCount=title, percentage=count, totalWorkforce=pct, skillTitle=totalWorkforce
         const isScrambled = typeof empClassSrc[0]?.workforceCount === 'string';
@@ -205,32 +213,27 @@ export default function App() {
       setOrgError('No organizational distribution data returned from the API.');
     }
 
-    // Workforce Trend — from dedicated subtype, fallback to Supabase
-    const trendApiData = trendRes?.data;
+    // Workforce Trend — from dedicated API subtype
+    const trendErr = (trendRes as { __error?: string })?.__error;
+    const trendApiData = trendErr ? null : trendRes?.data;
     const trendArr = trendApiData ? (
       (trendApiData as Record<string, unknown>).workforceGrowthTrend ??
       (trendApiData as Record<string, unknown>).workforceTrend ?? []
     ) : [];
     if (Array.isArray(trendArr) && trendArr.length > 0) {
-      setTrend((trendArr as { month?: string; monthYear?: string; total?: number; totalWorkforce?: number; active?: number; activeWorkforce?: number; joined?: number; newJoiners?: number; exited?: number; exits?: number }[]).map((d, i) => ({
+      setTrend((trendArr as Record<string, unknown>[]).map((d, i) => ({
         id: String(i),
-        month_year:       d.month          ?? d.monthYear       ?? '',
-        total_workforce:  d.total          ?? d.totalWorkforce  ?? 0,
-        active_workforce: d.active         ?? d.activeWorkforce ?? 0,
-        new_joiners:      d.joined         ?? d.newJoiners      ?? 0,
-        exits:            d.exited         ?? d.exits           ?? 0,
+        month_year:       String(d.month     ?? d.monthYear      ?? ''),
+        total_workforce:  Number(d.total     ?? d.totalWorkforce  ?? 0),
+        active_workforce: Number(d.active    ?? d.activeWorkforce ?? 0),
+        new_joiners:      Number(d.joined    ?? d.newJoiners      ?? 0),
+        exits:            Number(d.exited    ?? d.exits           ?? 0),
         utilization_pct:  0,
         created_at: '',
       })));
       setTrendError(null);
     } else {
-      if (supabaseTrend.error) {
-        setTrendError(`Failed to load trend data: ${supabaseTrend.error.message}`);
-      } else if (supabaseTrend.data && supabaseTrend.data.length > 0) {
-        setTrend(supabaseTrend.data);
-      } else {
-        setTrendError('No workforce trend data available.');
-      }
+      setTrendError(trendErr ? `Failed to load trend data: ${trendErr}` : 'No workforce trend data available.');
     }
     setLastRefreshed(new Date());
     setLoading(false);
@@ -402,6 +405,7 @@ export default function App() {
                   icon={ClipboardList}
                   variant="info"
                   subtitle={`${attendancePct}% attendance rate`}
+                  formula={`Attendance % = (Present Today ÷ Active Workforce) × 100  →  (${metrics.present_today} ÷ ${metrics.active_workforce}) × 100 = ${attendancePct}%`}
                   onAction={() => setDrawerFilter('present')}
                 />
                 <KPICard

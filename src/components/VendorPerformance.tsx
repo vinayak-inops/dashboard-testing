@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
 import {
   Building2, Users, ShieldCheck, ShieldAlert, AlertTriangle, Clock,
-  AlertCircle, ChevronUp, ChevronDown, BarChart2, Layers,
+  AlertCircle, ChevronUp, ChevronDown, BarChart2, Layers, LayoutList,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { apiPost } from '../lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface VendorRow {
   name: string;
   workforce: number;
+  presentEmployees: number;
   attendance: number;
   compliance: number;
   score: number;
   risk: 'Low' | 'Medium' | 'High';
+  totalLicenses: number;
+  validLicenses: number;
+  expiredLicenses: number;
+  totalWCPolicies: number;
+  validWCPolicies: number;
+  expiredWCPolicies: number;
+  workOrders: number;
 }
 
 interface SummaryData {
@@ -193,6 +202,73 @@ function ComplianceKpiCard({ summary }: { summary: SummaryData | null }) {
   );
 }
 
+// ── Vendor score bar chart ────────────────────────────────────────────────────
+
+function VendorScoreBarChart({ vendors }: { vendors: VendorRow[] }) {
+  if (!vendors.length) return <EmptyState message="No vendor score data available." />;
+
+  const sorted = [...vendors].sort((a, b) => b.score - a.score);
+
+  return (
+    <div className="overflow-y-auto" style={{ maxHeight: 420 }}>
+      <div className="space-y-2 pr-1">
+        {sorted.map((v, i) => {
+          const { color: rc, bg: rb } = riskColor(v.risk);
+          const { color: ac, bg: ab } = attColor(v.attendance);
+          const sc = scoreColor(v.score);
+          const licenseOk = v.totalLicenses > 0 ? v.validLicenses === v.totalLicenses : null;
+          const wcOk      = v.totalWCPolicies > 0 ? v.validWCPolicies === v.totalWCPolicies : null;
+
+          return (
+            <div key={i} className="rounded-xl px-3.5 py-3 transition-colors"
+              style={{ backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F0F4FF')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#F9FAFB')}>
+
+              {/* Row 1: name + badges */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-semibold truncate flex-1 min-w-0" style={{ color: '#111827' }} title={v.name}>{v.name}</span>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full tabular-nums" style={{ backgroundColor: ab, color: ac }}>{v.attendance}%</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: rb, color: rc }}>{v.risk}</span>
+                </div>
+              </div>
+
+              {/* Score bar */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#E5E7EB' }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${v.score}%`, backgroundColor: sc }} />
+                </div>
+                <span className="text-[11px] font-bold tabular-nums w-8 text-right flex-shrink-0" style={{ color: sc }}>{v.score}</span>
+              </div>
+
+              {/* Row 3: metrics strip */}
+              <div className="flex items-center gap-3 flex-wrap text-[9px]" style={{ color: '#6B7280' }}>
+                <span><strong style={{ color: '#374151' }}>{v.workforce.toLocaleString()}</strong> workforce</span>
+                <span><strong style={{ color: '#374151' }}>{v.presentEmployees}</strong> present</span>
+                <span style={{ color: v.compliance >= 70 ? '#15803D' : '#DC2626' }}>
+                  <strong>{v.compliance}%</strong> compliance
+                </span>
+                {licenseOk !== null && (
+                  <span style={{ color: licenseOk ? '#15803D' : '#DC2626' }}>
+                    {v.validLicenses}/{v.totalLicenses} lic
+                  </span>
+                )}
+                {wcOk !== null && (
+                  <span style={{ color: wcOk ? '#15803D' : '#DC2626' }}>
+                    {v.validWCPolicies}/{v.totalWCPolicies} WC
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Vendor performance table ──────────────────────────────────────────────────
 
 type SortKey = 'name' | 'workforce' | 'attendance' | 'compliance' | 'score' | 'risk';
@@ -200,6 +276,7 @@ type SortKey = 'name' | 'workforce' | 'attendance' | 'compliance' | 'score' | 'r
 function CombinedVendorTable({ vendors }: { vendors: VendorRow[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('score');
   const [sortAsc, setSortAsc] = useState(false);
+  const [view,    setView]    = useState<'chart' | 'table'>('chart');
 
   function handleSort(key: SortKey) {
     if (key === sortKey) setSortAsc(a => !a);
@@ -230,8 +307,26 @@ function CombinedVendorTable({ vendors }: { vendors: VendorRow[] }) {
   ];
 
   return (
-    <SectionCard title="Vendor Performance Overview" subtitle="Score, attendance & compliance — click column headers to sort">
-      {vendors.length === 0 ? <EmptyState message="No vendor data available." /> : (
+    <SectionCard title="Vendor Performance Overview" subtitle="Score, attendance & compliance — sorted by vendor score">
+      {/* Chart / Table toggle */}
+      <div className="flex items-center gap-1 mb-4 p-0.5 rounded-lg self-start" style={{ backgroundColor: '#F3F4F6' }}>
+        {([['chart', BarChart2, 'Score Chart'], ['table', LayoutList, 'Table']] as const).map(([key, Icon, label]) => (
+          <button key={key} onClick={() => setView(key as 'chart' | 'table')}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+            style={{
+              backgroundColor: view === key ? '#FFFFFF' : 'transparent',
+              color: view === key ? '#111827' : '#6B7280',
+              boxShadow: view === key ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}>
+            <Icon size={11} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {vendors.length === 0 ? <EmptyState message="No vendor data available." /> : view === 'chart' ? (
+        <VendorScoreBarChart vendors={vendors} />
+      ) : (
         <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
           <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
             <colgroup>
@@ -619,20 +714,42 @@ function WorkOrdersSection({ workOrders, loading }: { workOrders: WorkOrder[]; l
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Data normalisers ──────────────────────────────────────────────────────────
 
-const API_URL = 'https://devai.clms.in/webhook/clms-dashboard-new';
-
-function postApi(type: string) {
-  return fetch(API_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ type, tenantCode: 'AAL' }),
-  }).then(r => {
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
-  });
+function normaliseCards(json: Record<string, unknown>): SummaryData {
+  const d = (json?.summary ?? json?.data ?? json) as Record<string, unknown>;
+  return {
+    totalVendors:         Number(d?.totalVendors         ?? d?.total_vendors         ?? 0),
+    vendorWorkforce:      Number(d?.vendorWorkforce       ?? d?.vendor_workforce      ?? 0),
+    vendorCompliancePct:  Number(d?.vendorCompliancePct  ?? d?.vendor_compliance_pct ?? 0),
+    nonCompliantVendors:  Number(d?.nonCompliantVendors  ?? d?.non_compliant_vendors  ?? 0),
+    licenseExpiryAlerts:  Number(d?.licenseExpiryAlerts  ?? d?.license_expiry_alerts  ?? 0),
+    vendorAttendancePct:  Number(d?.vendorAttendancePct  ?? d?.vendor_attendance_pct  ?? 0),
+  };
 }
+
+function normaliseVendors(json: Record<string, unknown>): VendorRow[] {
+  const d = (json?.data ?? json) as Record<string, unknown>;
+  const arr = ((d?.vendorPerformance ?? d?.vendors ?? []) as Record<string, unknown>[]);
+  return arr.map(r => ({
+    name:              String(r.contractor        ?? r.name        ?? ''),
+    workforce:         Number(r.workforce         ?? 0),
+    presentEmployees:  Number(r.presentEmployees  ?? 0),
+    attendance:        Number(r.attendancePct      ?? r.attendance ?? 0),
+    compliance:        Number(r.compliancePct      ?? r.compliance ?? 0),
+    score:             Number(r.vendorScore        ?? r.score      ?? 0),
+    risk:              (String(r.risk ?? 'High'))  as VendorRow['risk'],
+    totalLicenses:     Number(r.totalLicenses      ?? 0),
+    validLicenses:     Number(r.validLicenses      ?? 0),
+    expiredLicenses:   Number(r.expiredLicenses    ?? 0),
+    totalWCPolicies:   Number(r.totalWCPolicies    ?? 0),
+    validWCPolicies:   Number(r.validWCPolicies    ?? 0),
+    expiredWCPolicies: Number(r.expiredWCPolicies  ?? 0),
+    workOrders:        Number(r.workOrders         ?? 0),
+  }));
+}
+
+
 
 export default function VendorPerformance() {
   const [vendors,    setVendors]    = useState<VendorRow[]>([]);
@@ -642,55 +759,72 @@ export default function VendorPerformance() {
   const [woLoading,  setWoLoading]  = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  async function loadWorkOrdersFromSupabase() {
+  function normaliseWorkOrders(json: Record<string, unknown>): WorkOrder[] {
+    const d = (json?.data ?? json) as Record<string, unknown>;
+    const arr = ((d?.workOrders ?? d?.work_orders ?? []) as Record<string, unknown>[]);
+    return arr.map(r => ({
+      workOrderNumber:    String(r.workOrderNumber   ?? r.work_order_number   ?? ''),
+      workOrderDate:      String(r.workOrderDate     ?? r.work_order_date     ?? ''),
+      vendorName:         r.vendorName != null ? String(r.vendorName) : r.vendor_name != null ? String(r.vendor_name) : undefined,
+      NumberOfEmployee:   Number(r.numberOfEmployee  ?? r.NumberOfEmployee    ?? r.number_of_employee ?? 0),
+      contractPeriodFrom: String(r.contractPeriodFrom ?? r.contract_period_from ?? ''),
+      contractPeriodTo:   String(r.contractPeriodTo   ?? r.contract_period_to   ?? ''),
+      workOrderType:      String(r.workOrderType      ?? r.work_order_type      ?? ''),
+      serviceLineItems:   String(r.serviceLineItems   ?? r.service_line_items   ?? ''),
+      serviceCode:        String(r.serviceCode        ?? r.service_code         ?? ''),
+    }));
+  }
+
+  async function loadWorkOrders() {
+    try {
+      const json = await apiPost({ type: 'vendor_performance', subtype: 'vendor_performance workorder' });
+      const rows = normaliseWorkOrders(json as Record<string, unknown>);
+      if (rows.length > 0) {
+        setWorkOrders(rows);
+        setWoLoading(false);
+        return;
+      }
+    } catch {
+      // fall through to Supabase
+    }
+    // Supabase fallback
     const { data, error } = await supabase
       .from('work_orders')
       .select('*')
       .order('vendor_name');
     if (!error && data && data.length > 0) {
       setWorkOrders(data.map(r => ({
-        workOrderNumber:   r.work_order_number,
-        workOrderDate:     r.work_order_date ?? '',
-        vendorName:        r.vendor_name ?? undefined,
-        NumberOfEmployee:  r.number_of_employee,
-        contractPeriodFrom:r.contract_period_from,
-        contractPeriodTo:  r.contract_period_to,
-        workOrderType:     r.work_order_type,
-        serviceLineItems:  r.service_line_items,
-        serviceCode:       r.service_code,
+        workOrderNumber:    r.work_order_number,
+        workOrderDate:      r.work_order_date ?? '',
+        vendorName:         r.vendor_name ?? undefined,
+        NumberOfEmployee:   r.number_of_employee,
+        contractPeriodFrom: r.contract_period_from,
+        contractPeriodTo:   r.contract_period_to,
+        workOrderType:      r.work_order_type,
+        serviceLineItems:   r.service_line_items,
+        serviceCode:        r.service_code,
       })));
     }
     setWoLoading(false);
   }
 
   useEffect(() => {
-    postApi('vendor_performance')
-      .then(json => {
-        if (json?.summary) setSummary(json.summary);
-        if (Array.isArray(json?.topVendors)) setVendors(json.topVendors as VendorRow[]);
-
-        if (Array.isArray(json?.workOrders) && json.workOrders.length > 0) {
-          setWorkOrders(json.workOrders.map((w: Record<string, unknown>) => ({
-            workOrderNumber:    String(w.workOrderNumber   ?? ''),
-            workOrderDate:      String(w.workOrderDate     ?? ''),
-            vendorName:         w.vendorName != null ? String(w.vendorName) : undefined,
-            NumberOfEmployee:   Number(w.numberOfEmployee  ?? 0),
-            contractPeriodFrom: String(w.contractPeriodFrom ?? ''),
-            contractPeriodTo:   String(w.contractPeriodTo   ?? ''),
-            workOrderType:      String(w.workOrderType      ?? ''),
-            serviceLineItems:   String(w.serviceLineItems   ?? ''),
-            serviceCode:        String(w.serviceCode        ?? ''),
-          })));
-          setWoLoading(false);
-        } else {
-          loadWorkOrdersFromSupabase();
-        }
-      })
-      .catch((err: Error) => {
-        setFetchError(err.message);
-        loadWorkOrdersFromSupabase();
-      })
+    // Cards KPIs
+    apiPost({ type: 'vendor_performance', subtype: 'vendor_performance cards' })
+      .then(json => setSummary(normaliseCards(json as Record<string, unknown>)))
+      .catch(() => {/* cards fail silently — zeros shown */})
       .finally(() => setLoading(false));
+
+    // Vendor score / overview table
+    apiPost({ type: 'vendor_performance', subtype: 'vendor_performance score' })
+      .then(json => {
+        const rows = normaliseVendors(json as Record<string, unknown>);
+        setVendors(rows);
+      })
+      .catch((err: Error) => setFetchError(err.message));
+
+    // Work orders from API (falls back to Supabase)
+    loadWorkOrders();
   }, []);
 
   return (

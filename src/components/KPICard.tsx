@@ -1,4 +1,5 @@
 import { LucideIcon, TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
+import FormulaTooltip from './FormulaTooltip';
 
 interface KPICardProps {
   title: string;
@@ -9,6 +10,7 @@ interface KPICardProps {
   trendLabel?: string;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
   format?: 'number' | 'percent' | 'raw';
+  formula?: string;
   onAction?: () => void;
 }
 
@@ -43,7 +45,7 @@ function formatValue(value: string | number, format: string): string {
 
 export default function KPICard({
   title, value, subtitle, icon: Icon,
-  trend, trendLabel, variant = 'default', format = 'number', onAction,
+  trend, trendLabel, variant = 'default', format = 'number', formula, onAction,
 }: KPICardProps) {
   const styles = variantStyles[variant];
   const isPositiveTrend = trend !== undefined && trend > 0;
@@ -66,7 +68,13 @@ export default function KPICard({
         </div>
         <div className="mt-1">
           <p className="kpi-value">{formatValue(value, format)}</p>
-          <p className="kpi-title">{title}</p>
+          {formula ? (
+            <FormulaTooltip formula={formula}>
+              <p className="kpi-title underline decoration-dotted decoration-gray-300 underline-offset-2">{title}</p>
+            </FormulaTooltip>
+          ) : (
+            <p className="kpi-title">{title}</p>
+          )}
           {(subtitle || trendLabel) && (
             <p className="kpi-subtitle">{subtitle || trendLabel}</p>
           )}

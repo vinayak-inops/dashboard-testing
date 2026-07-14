@@ -1,5 +1,6 @@
 import { UserCheck, UserX, UserPlus, LogOut, TrendingUp, Activity, ArrowRight } from 'lucide-react';
 import { WorkforceMetrics, EmployeeFilter } from '../lib/supabase';
+import FormulaTooltip from './FormulaTooltip';
 
 interface Props {
   metrics: WorkforceMetrics;
@@ -14,12 +15,13 @@ interface HalfCardProps {
   title: string;
   subtitle: string;
   format?: 'number' | 'percent';
+  formula?: string;
   filter?: EmployeeFilter;
   onAction?: (filter: EmployeeFilter) => void;
   noBorder?: boolean;
 }
 
-function HalfCard({ icon, iconBg, iconColor, value, title, subtitle, format = 'number', filter, onAction, noBorder }: HalfCardProps) {
+function HalfCard({ icon, iconBg, iconColor, value, title, subtitle, format = 'number', formula, filter, onAction, noBorder }: HalfCardProps) {
   const display = format === 'percent' ? `${value}%` : value.toLocaleString();
   return (
     <div
@@ -33,7 +35,13 @@ function HalfCard({ icon, iconBg, iconColor, value, title, subtitle, format = 'n
         {icon}
       </div>
       <p className="kpi-value">{display}</p>
-      <p className="kpi-title">{title}</p>
+      {formula ? (
+        <FormulaTooltip formula={formula}>
+          <p className="kpi-title underline decoration-dotted decoration-gray-300 underline-offset-2">{title}</p>
+        </FormulaTooltip>
+      ) : (
+        <p className="kpi-title">{title}</p>
+      )}
       <p className="kpi-subtitle">{subtitle}</p>
       {onAction && filter && (
         <button
@@ -126,6 +134,7 @@ export default function CombinedKPIRow({ metrics, onAction }: Props) {
             title="Workforce Growth"
             subtitle="Month-over-month"
             format="percent"
+            formula={`Growth % = ((Active Workforce − Previous Active) ÷ Previous Active) × 100  →  = ${metrics.workforce_growth_pct}%`}
           />
           <HalfCard
             icon={<Activity size={14} strokeWidth={1.75} />}
@@ -134,6 +143,7 @@ export default function CombinedKPIRow({ metrics, onAction }: Props) {
             title="Utilization Rate"
             subtitle="Capacity utilization"
             format="percent"
+            formula={`Utilization % = (Active Workforce ÷ Total Workforce) × 100  →  (${metrics.active_workforce} ÷ ${metrics.total_workforce}) × 100 = ${metrics.workforce_utilization_pct}%`}
             noBorder
           />
         </div>

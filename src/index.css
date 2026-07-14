@@ -297,4 +297,54 @@
     @apply bg-white shadow-sm;
     color: #111827;
   }
+
+  /* ── Formula Tooltip ─────────────────────────── */
+  .formula-host {
+    @apply relative inline-flex cursor-help;
+  }
+
+  .formula-portal-tooltip {
+    position: fixed;
+    z-index: 9999;
+    transform: translate(-50%, -100%);
+    max-width: 320px;
+    width: max-content;
+    border-radius: 10px;
+    padding: 8px 12px 9px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.55;
+    pointer-events: none;
+    background-color: #1F2937;
+    color: #F9FAFB;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    white-space: normal;
+    word-break: break-word;
+    animation: formula-fade-in 160ms ease-out;
+  }
+
+  .formula-portal-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1F2937;
+  }
+
+  .formula-tooltip-label {
+    @apply block text-[8px] font-bold uppercase tracking-wider mb-0.5;
+    color: #9CA3AF;
+  }
+
+  .formula-tooltip-body {
+    @apply block font-mono;
+    color: #F9FAFB;
+  }
+
+  @keyframes formula-fade-in {
+    from { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); }
+    to   { opacity: 1; transform: translate(-50%, -100%); }
+  }
 }

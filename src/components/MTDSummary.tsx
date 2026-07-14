@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UserPlus, UserMinus, TrendingUp } from 'lucide-react';
 import { WorkforceMetrics } from '../lib/supabase';
+import FormulaTooltip from './FormulaTooltip';
 
 interface MTDSummaryProps { metrics: WorkforceMetrics; }
 type Period = 'MTD' | 'QTD' | 'YTD';
@@ -84,7 +85,9 @@ export default function MTDSummary({ metrics }: MTDSummaryProps) {
         {/* Attrition bar */}
         <div className="pt-1">
           <div className="flex items-center justify-between text-[10px] mb-1.5">
-            <span style={{ color: '#6B7280' }}>{period} Attrition Rate</span>
+            <FormulaTooltip formula={`Attrition % = (Exits ÷ Total Workforce) × 100  →  (${exitedWorkers} ÷ ${metrics.total_workforce}) × 100 = ${((exitedWorkers / metrics.total_workforce) * 100).toFixed(2)}%`}>
+              <span className="underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color: '#6B7280' }}>{period} Attrition Rate</span>
+            </FormulaTooltip>
             <span className="font-semibold" style={{ color: '#374151' }}>
               {((exitedWorkers / metrics.total_workforce) * 100).toFixed(2)}%
             </span>

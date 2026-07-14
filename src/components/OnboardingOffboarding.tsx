@@ -3,6 +3,7 @@ import {
   DollarSign, Briefcase, CheckCircle, AlertCircle, ArrowRight,
   Target, Activity, Shield, AlertTriangle,
 } from 'lucide-react';
+import FormulaTooltip from './FormulaTooltip';
 
 // ── Fallback data ─────────────────────────────────────────────────────────────
 
@@ -124,7 +125,7 @@ const SCORECARD = [
 
 // ── Helper components ─────────────────────────────────────────────────────────
 
-type KPI = { title: string; value: string | number; sub?: string; color: string; icon: typeof UserPlus; trend?: number };
+type KPI = { title: string; value: string | number; sub?: string; color: string; icon: typeof UserPlus; trend?: number; formula?: string };
 
 function MiniKPI({ k }: { k: KPI }) {
   const Icon = k.icon;
@@ -146,7 +147,13 @@ function MiniKPI({ k }: { k: KPI }) {
           )}
         </div>
         <p className="kpi-value">{typeof k.value === 'number' ? k.value.toLocaleString() : k.value}</p>
-        <p className="kpi-title">{k.title}</p>
+        {k.formula ? (
+          <FormulaTooltip formula={k.formula}>
+            <p className="kpi-title underline decoration-dotted decoration-gray-300 underline-offset-2">{k.title}</p>
+          </FormulaTooltip>
+        ) : (
+          <p className="kpi-title">{k.title}</p>
+        )}
         {k.sub && <p className="kpi-subtitle">{k.sub}</p>}
       </div>
     </div>
@@ -310,11 +317,13 @@ function OnboardingTab() {
     { title: 'Total Onboarded (YTD)', value: 2756,   sub: 'Year to date', color: '#3B82F6', icon: UserPlus,  trend: 14  },
     { title: 'New Joiners MTD',       value: 250,    sub: 'This month',   color: '#10B981', icon: Users,     trend: 14  },
     { title: 'New Joiners QTD',       value: 712,    sub: 'This quarter', color: '#8B5CF6', icon: Users,     trend: 8   },
-    { title: 'Offer-to-Join Rate',    value: `${convRate}%`, sub: 'Conversion',  color: '#F59E0B', icon: Target              },
+    { title: 'Offer-to-Join Rate',    value: `${convRate}%`, sub: 'Conversion',  color: '#F59E0B', icon: Target,
+      formula: `Offer-to-Join % = (Offers Accepted ÷ Offers Extended) × 100  →  (${convRate})%` },
     { title: 'Avg Time to Onboard',   value: '3.2d', sub: 'Days to activate', color: '#06B6D4', icon: Clock,    trend: -22 },
     { title: 'Cost per Hire',         value: '₹12,450', sub: 'Avg hiring cost',color: '#EC4899', icon: DollarSign           },
     { title: 'Open Positions',        value: 124,    sub: 'Unfilled roles',   color: '#EF4444', icon: Briefcase             },
-    { title: 'Filled Positions',      value: 408,    sub: `${fillRate}% fill rate`, color: '#22C55E', icon: CheckCircle, trend: 6 },
+    { title: 'Filled Positions',      value: 408,    sub: `${fillRate}% fill rate`, color: '#22C55E', icon: CheckCircle, trend: 6,
+      formula: `Fill Rate % = (Filled Positions ÷ (Open + Filled Positions)) × 100  →  = ${fillRate}%` },
   ];
 
   return (
@@ -441,13 +450,17 @@ function OnboardingTab() {
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="p-2 rounded-lg text-center" style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
               <p className="text-xs font-bold" style={{ color: '#1D4ED8' }}>{convRate}%</p>
-              <p className="text-[9px]" style={{ color: '#6B7280' }}>Offer-to-Join Rate</p>
+              <FormulaTooltip formula={`Offer-to-Join % = (Candidates Joined ÷ Offers Extended) × 100  →  (${JOINING_FUNNEL.joined} ÷ ${JOINING_FUNNEL.offered}) × 100 = ${convRate}%`}>
+                <p className="text-[9px] underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color: '#6B7280' }}>Offer-to-Join Rate</p>
+              </FormulaTooltip>
             </div>
             <div className="p-2 rounded-lg text-center" style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
               <p className="text-xs font-bold" style={{ color: '#DC2626' }}>
                 {((JOINING_FUNNEL.noShow / JOINING_FUNNEL.offered) * 100).toFixed(1)}%
               </p>
-              <p className="text-[9px]" style={{ color: '#6B7280' }}>No-Show Rate</p>
+              <FormulaTooltip formula={`No-Show % = (No-Shows ÷ Offers Extended) × 100  →  (${JOINING_FUNNEL.noShow} ÷ ${JOINING_FUNNEL.offered}) × 100 = ${((JOINING_FUNNEL.noShow / JOINING_FUNNEL.offered) * 100).toFixed(1)}%`}>
+                <p className="text-[9px] underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color: '#6B7280' }}>No-Show Rate</p>
+              </FormulaTooltip>
             </div>
           </div>
         </div>
@@ -492,11 +505,15 @@ function OffboardingTab() {
     { title: 'Total Exits (YTD)',   value: 702,    sub: 'Year to date',     color: '#EF4444', icon: UserMinus, trend: -12 },
     { title: 'Exits MTD',           value: 60,     sub: 'This month',       color: '#F97316', icon: UserMinus, trend: -20 },
     { title: 'Exits QTD',           value: 178,    sub: 'This quarter',     color: '#F59E0B', icon: UserMinus, trend: -9  },
-    { title: 'Attrition Rate',      value: '2.4%', sub: 'Monthly rate',     color: '#DC2626', icon: Activity,  trend: -23 },
+    { title: 'Attrition Rate',      value: '2.4%', sub: 'Monthly rate',     color: '#DC2626', icon: Activity,  trend: -23,
+      formula: `Attrition % = (Exits in Period ÷ Avg Headcount) × 100  →  (60 ÷ 2,500) × 100 = 2.4%` },
     { title: 'Active Workforce',    value: '3,285',sub: 'Total headcount',  color: '#22C55E', icon: Users,     trend: 5   },
-    { title: 'Voluntary Attrition', value: `${voluntaryPct}%`, sub: 'Self-initiated', color: '#8B5CF6', icon: ArrowRight },
-    { title: 'Involuntary Attrition', value: `${involuntaryPct}%`, sub: 'Company-initiated', color: '#EF4444', icon: AlertCircle },
-    { title: 'Early Attrition %',   value: `${earlyAttPct}%`, sub: '≤30 days', color: '#F59E0B', icon: AlertTriangle },
+    { title: 'Voluntary Attrition', value: `${voluntaryPct}%`, sub: 'Self-initiated', color: '#8B5CF6', icon: ArrowRight,
+      formula: `Voluntary Attrition % = (Voluntary Exits ÷ Total Exits) × 100  →  = ${voluntaryPct}%` },
+    { title: 'Involuntary Attrition', value: `${involuntaryPct}%`, sub: 'Company-initiated', color: '#EF4444', icon: AlertCircle,
+      formula: `Involuntary Attrition % = (Involuntary Exits ÷ Total Exits) × 100  →  = ${involuntaryPct}%` },
+    { title: 'Early Attrition %',   value: `${earlyAttPct}%`, sub: '≤30 days', color: '#F59E0B', icon: AlertTriangle,
+      formula: `Early Attrition % = (Exits ≤30 Days ÷ Total Onboarded) × 100  →  = ${earlyAttPct}%` },
   ];
 
   return (
@@ -587,7 +604,9 @@ function OffboardingTab() {
                 <div key={d.name}>
                   <div className="flex justify-between mb-1">
                     <span className="text-[10px]" style={{ color: '#6B7280' }}>{d.name}</span>
-                    <span className="text-[10px] font-bold" style={{ color }}>{d.pct}%</span>
+                    <FormulaTooltip formula={`Dept Attrition % = (Dept Exits ÷ Dept Headcount) × 100  →  = ${d.pct}%`}>
+                      <span className="text-[10px] font-bold underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color }}>{d.pct}%</span>
+                    </FormulaTooltip>
                   </div>
                   <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
                     <div className="h-full rounded-full" style={{ width: `${(d.pct / 5) * 100}%`, backgroundColor: color }} />
@@ -812,7 +831,9 @@ function StrategicTab() {
                   <div key={d.name}>
                     <div className="flex justify-between mb-0.5">
                       <span className="text-[10px]" style={{ color: '#6B7280' }}>{d.name}</span>
-                      <span className="text-[10px] font-bold" style={{ color }}>{d.pct}%</span>
+                      <FormulaTooltip formula={`Contractor Attrition % = (Contractor Exits ÷ Contractor Headcount) × 100  →  = ${d.pct}%`}>
+                        <span className="text-[10px] font-bold underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color }}>{d.pct}%</span>
+                      </FormulaTooltip>
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
                       <div className="h-full rounded-full" style={{ width: `${(d.pct / 5) * 100}%`, backgroundColor: color }} />
@@ -837,7 +858,9 @@ function StrategicTab() {
                   <div key={d.name}>
                     <div className="flex justify-between mb-0.5">
                       <span className="text-[10px]" style={{ color: '#6B7280' }}>{d.name}</span>
-                      <span className="text-[10px] font-bold" style={{ color }}>{d.pct}%</span>
+                      <FormulaTooltip formula={`Location Attrition % = (Location Exits ÷ Location Headcount) × 100  →  = ${d.pct}%`}>
+                        <span className="text-[10px] font-bold underline decoration-dotted decoration-gray-300 underline-offset-2" style={{ color }}>{d.pct}%</span>
+                      </FormulaTooltip>
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
                       <div className="h-full rounded-full" style={{ width: `${(d.pct / 5) * 100}%`, backgroundColor: color }} />
