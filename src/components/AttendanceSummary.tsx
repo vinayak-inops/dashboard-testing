@@ -558,28 +558,25 @@ function OrgAttendanceChart() {
 
 // ── Attendance Trend Charts ───────────────────────────────────────────────────
 
-type TrendPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+type TrendPeriod = 'daily' | 'weekly' | 'quarterly' | 'yearly';
 
 const TREND_TABS: { key: TrendPeriod; label: string }[] = [
   { key: 'daily',     label: 'Daily' },
   { key: 'weekly',    label: 'Weekly' },
-  { key: 'monthly',   label: 'Monthly' },
   { key: 'quarterly', label: 'Quarterly' },
   { key: 'yearly',    label: 'Yearly' },
 ];
 
 // ── Trend data types ──────────────────────────────────────────────────────────
 
-type DailyPoint     = { day: string; present: number; absent: number };
-type WeeklyPoint    = { week: string; present: number; absent: number; late: number };
-type MonthlyPoint   = { month: string; pct: number; present: number };
+type DailyPoint     = { day: string; present: number; absent: number; late: number; early: number };
+type WeeklyPoint    = { week: string; present: number; absent: number; late: number; early: number };
 type QuarterlyPoint = { quarter: string; present: number; absent: number; late: number; early: number };
-type YearlyPoint    = { month: string; pct: number; count: number };
+type YearlyPoint    = { month: string; pct: number; present: number; absent: number; late: number; early: number };
 
 export interface TrendsData {
   daily?:     DailyPoint[];
   weekly?:    WeeklyPoint[];
-  monthly?:   MonthlyPoint[];
   quarterly?: QuarterlyPoint[];
   yearly?:    YearlyPoint[];
 }
@@ -609,6 +606,8 @@ function DailyChart({ data }: { data: DailyPoint[] }) {
       <div className="flex items-center gap-3 mb-2.5 flex-wrap">
         <div className="flex items-center gap-1.5"><span className="w-2.5 h-1 rounded-full inline-block" style={{ backgroundColor: '#2563EB' }} /><span className="text-[10px]" style={{ color: '#6B7280' }}>Present</span></div>
         <div className="flex items-center gap-1.5"><span className="w-2.5 h-1 rounded-full inline-block" style={{ backgroundColor: '#EF4444' }} /><span className="text-[10px]" style={{ color: '#6B7280' }}>Absent</span></div>
+        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1 rounded-full inline-block" style={{ backgroundColor: '#F59E0B' }} /><span className="text-[10px]" style={{ color: '#6B7280' }}>Late In</span></div>
+        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1 rounded-full inline-block" style={{ backgroundColor: '#06B6D4' }} /><span className="text-[10px]" style={{ color: '#6B7280' }}>Early Out</span></div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ display: 'block', maxHeight: 200 }}>
         <defs>
@@ -643,10 +642,12 @@ function DailyChart({ data }: { data: DailyPoint[] }) {
             <text x={xs[i]} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="10" fill="#9CA3AF">{d.day}</text>
             {hover === i && (
               <g>
-                <rect x={xs[i] + 7} y={yP[i] - 26} width="76" height="42" rx="4" fill="#1F2937" opacity="0.93" />
-                <text x={xs[i] + 45} y={yP[i] - 13} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="600">{d.day}</text>
-                <text x={xs[i] + 45} y={yP[i]     } textAnchor="middle" fontSize="10" fill="#93C5FD">P: {d.present.toLocaleString()}</text>
-                <text x={xs[i] + 45} y={yP[i] + 13} textAnchor="middle" fontSize="10" fill="#FCA5A5">A: {d.absent.toLocaleString()}</text>
+                <rect x={xs[i] + 7} y={yP[i] - 52} width="86" height="82" rx="4" fill="#1F2937" opacity="0.93" />
+                <text x={xs[i] + 50} y={yP[i] - 39} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="600">{d.day}</text>
+                <text x={xs[i] + 50} y={yP[i] - 26} textAnchor="middle" fontSize="10" fill="#93C5FD">P: {d.present.toLocaleString()}</text>
+                <text x={xs[i] + 50} y={yP[i] - 13} textAnchor="middle" fontSize="10" fill="#FCA5A5">A: {d.absent.toLocaleString()}</text>
+                <text x={xs[i] + 50} y={yP[i]     } textAnchor="middle" fontSize="10" fill="#FCD34D">Late: {d.late.toLocaleString()}</text>
+                <text x={xs[i] + 50} y={yP[i] + 13} textAnchor="middle" fontSize="10" fill="#67E8F9">Early: {d.early.toLocaleString()}</text>
               </g>
             )}
           </g>
@@ -663,16 +664,16 @@ function WeeklyChart({ data }: { data: WeeklyPoint[] }) {
   const chartW = W - PAD.l - PAD.r;
   const chartH = H - PAD.t - PAD.b;
   const [hover, setHover] = useState<number | null>(null);
-  const COLS = ['#2563EB', '#EF4444', '#F59E0B'];
-  const KEYS = ['present', 'absent', 'late'] as const;
-  const LABELS = ['Present', 'Absent', 'Late In'];
+  const COLS = ['#2563EB', '#EF4444', '#F59E0B', '#06B6D4'];
+  const KEYS = ['present', 'absent', 'late', 'early'] as const;
+  const LABELS = ['Present', 'Absent', 'Late In', 'Early Out'];
 
   if (!data.length) return <p className="text-xs text-center py-8" style={{ color: '#9CA3AF' }}>No weekly data available.</p>;
 
-  const maxVal = Math.max(...data.map(d => d.present), 1);
+  const maxVal = Math.max(...data.flatMap(d => [d.present, d.absent]), 1);
   const groupW = chartW / data.length;
-  const barW = groupW * 0.22;
-  const gap = groupW * 0.04;
+  const barW = groupW * 0.17;
+  const gap = groupW * 0.03;
 
   return (
     <div>
@@ -709,7 +710,7 @@ function WeeklyChart({ data }: { data: WeeklyPoint[] }) {
               <text x={cx} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="10" fill="#9CA3AF">{d.week}</text>
               {hover === i && (
                 <g>
-                  <rect x={cx - 38} y={PAD.t} width="76" height="52" rx="4" fill="#1F2937" opacity="0.93" />
+                  <rect x={cx - 42} y={PAD.t} width="84" height="64" rx="4" fill="#1F2937" opacity="0.93" />
                   <text x={cx} y={PAD.t + 13} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="600">{d.week}</text>
                   {KEYS.map((k, ki) => (
                     <text key={k} x={cx} y={PAD.t + 25 + ki * 12} textAnchor="middle" fontSize="10" fill={COLS[ki]}>
@@ -722,47 +723,6 @@ function WeeklyChart({ data }: { data: WeeklyPoint[] }) {
           );
         })}
       </svg>
-    </div>
-  );
-}
-
-// ── Monthly: radial ring chart ───────────────────────────────────────────────
-
-function RadialRing({ pct, color, size = 64, stroke = 7 }: { pct: number; color: string; size?: number; stroke?: number }) {
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const dash = (pct / 100) * circ;
-  const cx = size / 2, cy = size / 2;
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F3F4F6" strokeWidth={stroke} />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={stroke}
-        strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
-        transform={`rotate(-90 ${cx} ${cy})`}
-        style={{ transition: 'stroke-dasharray 0.6s ease' }}
-      />
-      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize="10" fontWeight="700" fill="#111827">{pct}</text>
-    </svg>
-  );
-}
-
-function MonthlyChart({ data }: { data: MonthlyPoint[] }) {
-  const colors = ['#3B82F6','#10B981','#F59E0B','#EF4444','#06B6D4','#2563EB','#8B5CF6','#EC4899','#14B8A6','#F97316','#84CC16','#0EA5E9'];
-  const nonZero = data.filter(d => d.pct > 0 || d.present > 0);
-  const display = nonZero.length > 0 ? nonZero : data;
-
-  if (!display.length) return <p className="text-xs text-center py-8" style={{ color: '#9CA3AF' }}>No monthly data available.</p>;
-
-  return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-      {display.map((d, i) => (
-        <div key={`${d.month}-${i}`} className="flex flex-col items-center gap-1.5 p-3 rounded-xl"
-          style={{ backgroundColor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
-          <RadialRing pct={d.pct} color={colors[i % colors.length]} size={64} stroke={7} />
-          <span className="text-[11px] font-semibold" style={{ color: '#374151' }}>{d.month}</span>
-          <span className="text-[10px] tabular-nums" style={{ color: '#9CA3AF' }}>{d.present.toLocaleString()}</span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -795,7 +755,7 @@ function QuarterlyChart({ data }: { data: QuarterlyPoint[] }) {
           const total = SEG.reduce((s, seg) => s + d[seg.key], 0);
           return (
             <div key={d.quarter} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center mb-1">
                 <span className="text-[10px] font-semibold w-14 flex-shrink-0" style={{ color: '#374151' }}>{d.quarter}</span>
                 <div className="flex-1 mx-3">
                   <div className="flex h-6 rounded-lg overflow-hidden gap-px">
@@ -812,9 +772,6 @@ function QuarterlyChart({ data }: { data: QuarterlyPoint[] }) {
                     ))}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold tabular-nums w-12 text-right flex-shrink-0" style={{ color: '#111827' }}>
-                  {total.toLocaleString()}
-                </span>
               </div>
               {hover === i && (
                 <div className="flex flex-wrap gap-3 ml-14 mt-1 mb-1 pl-3">
@@ -846,7 +803,13 @@ function pctToColor(pct: number): string {
 
 function YearlyChart({ data }: { data: YearlyPoint[] }) {
   const [hover, setHover] = useState<number | null>(null);
-  const maxCount = Math.max(...data.map(d => d.count), 1);
+  const maxCount = Math.max(...data.map(d => d.present), 1);
+  const SEG = [
+    { key: 'present', label: 'Present', color: '#93C5FD' },
+    { key: 'absent',  label: 'Absent',  color: '#FCA5A5' },
+    { key: 'late',    label: 'Late In', color: '#FCD34D' },
+    { key: 'early',   label: 'Early Out', color: '#67E8F9' },
+  ] as const;
 
   if (!data.length) return <p className="text-xs text-center py-8" style={{ color: '#9CA3AF' }}>No yearly data available.</p>;
 
@@ -864,7 +827,7 @@ function YearlyChart({ data }: { data: YearlyPoint[] }) {
       <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
         {data.map((d, i) => {
           const color = pctToColor(d.pct);
-          const barH = Math.round((d.count / maxCount) * 36);
+          const barH = Math.round((d.present / maxCount) * 36);
           return (
             <div key={`${d.month}-${i}`} className="relative flex flex-col items-center gap-1 cursor-default"
               onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
@@ -882,10 +845,14 @@ function YearlyChart({ data }: { data: YearlyPoint[] }) {
                 <div className="absolute bottom-full mb-2 left-1/2 z-10 pointer-events-none"
                   style={{ transform: 'translateX(-50%)' }}>
                   <div className="rounded-lg px-2.5 py-2 text-center whitespace-nowrap"
-                    style={{ backgroundColor: '#1F2937', minWidth: 90 }}>
+                    style={{ backgroundColor: '#1F2937', minWidth: 96 }}>
                     <p className="text-[10px] font-bold text-white mb-0.5">{d.month}</p>
-                    <p className="text-[10px]" style={{ color: '#93C5FD' }}>{d.count.toLocaleString()} present</p>
-                    <p className="text-[10px]" style={{ color: '#6EE7B7' }}>{d.pct > 0 ? `${d.pct}% rate` : 'No data'}</p>
+                    {SEG.map(seg => (
+                      <p key={seg.key} className="text-[10px]" style={{ color: seg.color }}>
+                        {seg.label}: {d[seg.key].toLocaleString()}
+                      </p>
+                    ))}
+                    <p className="text-[10px] mt-0.5" style={{ color: '#6EE7B7' }}>{d.pct > 0 ? `${d.pct}% rate` : 'No data'}</p>
                   </div>
                 </div>
               )}
@@ -905,7 +872,6 @@ function AttendanceTrendSection({ trends }: { trends?: TrendsData }) {
   const PERIOD_META: Record<TrendPeriod, { subtitle: string }> = {
     daily:     { subtitle: 'Present vs. absent for each working day this week' },
     weekly:    { subtitle: 'Week-over-week grouped attendance for last 5 weeks' },
-    monthly:   { subtitle: 'Attendance rate rings across rolling 6 months' },
     quarterly: { subtitle: 'Stacked quarterly breakdown — present, absent, late, early out' },
     yearly:    { subtitle: 'Monthly heatmap across the full fiscal year' },
   };
@@ -940,7 +906,6 @@ function AttendanceTrendSection({ trends }: { trends?: TrendsData }) {
       <div style={{ minHeight: 260 }}>
         {period === 'daily'     && <DailyChart     data={trends?.daily     ?? []} />}
         {period === 'weekly'    && <WeeklyChart    data={trends?.weekly    ?? []} />}
-        {period === 'monthly'   && <MonthlyChart   data={trends?.monthly   ?? []} />}
         {period === 'quarterly' && <QuarterlyChart data={trends?.quarterly ?? []} />}
         {period === 'yearly'    && <YearlyChart    data={trends?.yearly    ?? []} />}
       </div>
@@ -1374,10 +1339,10 @@ export default function AttendanceSummary() {
       if (!raw) { setFetchError('API returned no data.'); return; }
 
       const ov  = raw.attendanceOverview      ?? {};
-      const st  = raw.attendanceStatus        ?? {};
-      const shifts: { shiftCode?: string; shiftName: string; totalEmployees: number; male: number; female: number }[] =
-        raw.shiftWiseAttendance ?? [];
-      const live = raw.employeesInsidePremises ?? {};
+      const ex  = raw.attendanceExceptions    ?? {};
+      const shifts: { shiftCode?: string; shiftName: string; totalCount: number; maleCount: number; femaleCount: number }[] =
+        raw.shiftDistribution ?? [];
+      const live = raw.insidePremises ?? {};
 
       // Trends come from the dedicated Attendance Trend subtype
       const tr = (trRaw?.attendanceTrends ?? trRaw?.trends ?? raw.attendanceTrends) ?? {};
@@ -1401,31 +1366,29 @@ export default function AttendanceSummary() {
         .filter(c => c.workOrders.some(w => w.totalEmployees > 0));
 
       setData({
-        totalEmployees: ov.totalEmployees ?? 0,
+        totalEmployees: ov.activeEmployees ?? 0,
         attendanceSummary: {
           values: [
-            { label: 'Total Employees',  value: ov.totalEmployees  ?? 0, male: ov.maleEmployees  ?? 0, female: ov.femaleEmployees  ?? 0 },
+            { label: 'Total Employees',  value: ov.activeEmployees  ?? 0, male: ov.maleEmployees  ?? 0, female: ov.femaleEmployees  ?? 0 },
             { label: 'Total Present',    value: ov.presentEmployees ?? 0, male: ov.presentMale    ?? 0, female: ov.presentFemale    ?? 0, filter: 'att_total_present' },
-            { label: 'Half-Day Present', value: ov.halfDayPresent   ?? 0, male: ov.halfDayMale    ?? 0, female: ov.halfDayFemale    ?? 0, filter: 'att_half_day' },
             { label: 'Total Absent',     value: ov.absentEmployees  ?? 0, male: ov.absentMale     ?? 0, female: ov.absentFemale     ?? 0, filter: 'att_total_absent' },
-            { label: 'Attendance %',     value: `${ov.attendancePercentage ?? 0}%` },
           ],
         },
         attendanceOtherMetrics: {
           values: [
-            { label: 'Weekly Off',   value: st.weeklyOff?.total   ?? 0, male: st.weeklyOff?.male   ?? 0, female: st.weeklyOff?.female   ?? 0, filter: 'att_weekly_off' },
-            { label: 'Leave',        value: st.leave?.total        ?? 0, male: st.leave?.male        ?? 0, female: st.leave?.female        ?? 0, filter: 'att_leave' },
-            { label: 'Holiday',      value: st.holiday?.total      ?? 0, male: st.holiday?.male      ?? 0, female: st.holiday?.female      ?? 0, filter: 'att_holiday' },
-            { label: 'On Duty',      value: st.onDuty?.total       ?? 0, male: st.onDuty?.male       ?? 0, female: st.onDuty?.female       ?? 0, filter: 'att_on_duty' },
-            { label: 'Missed Punch', value: st.missedPunch?.total  ?? 0, male: st.missedPunch?.male  ?? 0, female: st.missedPunch?.female  ?? 0, filter: 'att_missed_punch' },
+            { label: 'Weekly Off',   value: ex.weeklyOff?.total   ?? 0, male: ex.weeklyOff?.male   ?? 0, female: ex.weeklyOff?.female   ?? 0, filter: 'att_weekly_off' },
+            { label: 'Leave',        value: ex.leave?.total        ?? 0, male: ex.leave?.male        ?? 0, female: ex.leave?.female        ?? 0, filter: 'att_leave' },
+            { label: 'Holiday',      value: ex.holiday?.total      ?? 0, male: ex.holiday?.male      ?? 0, female: ex.holiday?.female      ?? 0, filter: 'att_holiday' },
+            { label: 'On Duty',      value: ex.onDuty?.total       ?? 0, male: ex.onDuty?.male       ?? 0, female: ex.onDuty?.female       ?? 0, filter: 'att_on_duty' },
+            { label: 'Missed Punch', value: ex.missedPunch?.total  ?? 0, male: ex.missedPunch?.male  ?? 0, female: ex.missedPunch?.female  ?? 0, filter: 'att_missed_punch' },
           ],
         },
         shiftDistribution: {
           values: shifts.map(sh => ({
             label:  sh.shiftName,
-            value:  sh.totalEmployees,
-            male:   sh.male,
-            female: sh.female,
+            value:  sh.totalCount,
+            male:   sh.maleCount,
+            female: sh.femaleCount,
             filter: sh.shiftCode === 'G' ? 'shift_general'  :
                     sh.shiftCode === 'A' ? 'shift_morning'   :
                     sh.shiftCode === 'B' ? 'shift_evening'   :
@@ -1440,11 +1403,9 @@ export default function AttendanceSummary() {
         trends: {
           daily:     (tr.last7Days   ?? []) as DailyPoint[],
           weekly:    (tr.last5Weeks  ?? []) as WeeklyPoint[],
-          monthly:   (tr.last6Months ?? []).map((m: { month: string; attendancePercentage: number; present: number }) =>
-            ({ month: m.month, pct: m.attendancePercentage, present: m.present })) as MonthlyPoint[],
           quarterly: (tr.quarterly   ?? []) as QuarterlyPoint[],
-          yearly:    (tr.last12Months ?? []).map((m: { month: string; attendancePercentage: number; present: number }) =>
-            ({ month: m.month, pct: m.attendancePercentage, count: m.present })) as YearlyPoint[],
+          yearly:    (tr.last12Months ?? []).map((m: Record<string, number | string>) =>
+            ({ month: m.month, pct: m.attendancePercentage, present: m.present, absent: m.absent, late: m.late, early: m.early })) as YearlyPoint[],
         },
         contractors,
       });
@@ -1474,7 +1435,7 @@ export default function AttendanceSummary() {
   const cards: AttendanceCardProps[] = [
     {
       title: 'Attendance Overview',
-      metrics: ['Total Employees', 'Total Present', 'Half-Day Present', 'Total Absent', 'Attendance %'],
+      metrics: ['Total Employees', 'Total Present', 'Total Absent'],
       icon: Users,
       accentColor: '#2563EB',
       bgColor: '#EFF6FF',
@@ -1485,9 +1446,7 @@ export default function AttendanceSummary() {
         : [
             { label: 'Total Employees',  value: '—' },
             { label: 'Total Present',    value: '—' },
-            { label: 'Half-Day Present', value: '—' },
             { label: 'Total Absent',     value: '—' },
-            { label: 'Attendance %',     value: '—' },
           ],
     },
     {
@@ -1569,7 +1528,7 @@ export default function AttendanceSummary() {
 
 // ── Section Tabs component ────────────────────────────────────────────────────
 
-type AttendanceTab = 'org' | 'trend' | 'late' | 'overtime' | 'shortfall';
+type AttendanceTab = 'org' | 'trend' | 'late' | 'shortfall'; // 'overtime' blocked — re-enable when needed
 
 function AttendanceSectionTabs({ data }: { data: DashboardData | null }) {
   const [tab, setTab] = useState<AttendanceTab>('org');
@@ -1578,7 +1537,7 @@ function AttendanceSectionTabs({ data }: { data: DashboardData | null }) {
     { key: 'org',       label: 'Org Distribution',  icon: BarChart2  },
     { key: 'trend',     label: 'Attendance Trend',   icon: TrendingUp },
     { key: 'late',      label: 'Late / Early Out',   icon: Timer      },
-    { key: 'overtime',  label: 'Overtime',           icon: Activity   },
+    // { key: 'overtime',  label: 'Overtime',           icon: Activity   }, // blocked — hidden from UI
     { key: 'shortfall', label: 'Shortfall & OT',     icon: GitMerge   },
   ];
 
@@ -1605,7 +1564,7 @@ function AttendanceSectionTabs({ data }: { data: DashboardData | null }) {
       {tab === 'org'       && <OrgAttendanceChart />}
       {tab === 'trend'     && <AttendanceTrendSection trends={data?.trends} />}
       {tab === 'late'      && <LateLeavingTrend />}
-      {tab === 'overtime'  && <OvertimeAnalysis />}
+      {/* tab === 'overtime' && <OvertimeAnalysis /> */}{/* blocked — re-enable when needed */}
       {tab === 'shortfall' && <AttendanceOTCorrelationChart contractors={data?.contractors ?? []} />}
     </div>
   );

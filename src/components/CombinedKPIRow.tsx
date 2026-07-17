@@ -143,7 +143,7 @@ export default function CombinedKPIRow({ metrics, onAction }: Props) {
             title="Utilization Rate"
             subtitle="Capacity utilization"
             format="percent"
-            formula={`Utilization % = (Active Workforce ÷ Total Workforce) × 100  →  (${metrics.active_workforce} ÷ ${metrics.total_workforce}) × 100 = ${metrics.workforce_utilization_pct}%`}
+            formula={`Utilization % = (Present Today ÷ Active Workforce) × 100  →  (${metrics.present_today} ÷ ${metrics.active_workforce}) × 100 = ${metrics.workforce_utilization_pct}%`}
             noBorder
           />
         </div>

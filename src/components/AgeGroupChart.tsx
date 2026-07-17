@@ -4,10 +4,27 @@ interface AgeGroupChartProps { data: WorkforceAgeGroup[]; }
 
 const BAR_COLORS = ['#BFDBFE', '#93C5FD', '#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8'];
 
+const AGE_ORDER: Record<string, number> = {
+  'under 25': 1,
+  '25–34': 2,
+  '25-34': 2,
+  '35–44': 3,
+  '35-44': 3,
+  '45–54': 4,
+  '45-54': 4,
+  '55–64': 5,
+  '55-64': 5,
+  '65+': 6,
+};
+
 export default function AgeGroupChart({ data }: AgeGroupChartProps) {
   if (!data.length) return null;
 
-  const sorted = [...data].sort((a, b) => a.sort_order - b.sort_order);
+  const sorted = [...data].sort((a, b) => {
+    const oa = AGE_ORDER[a.age_group.toLowerCase()] ?? 99;
+    const ob = AGE_ORDER[b.age_group.toLowerCase()] ?? 99;
+    return oa - ob;
+  });
   const maxCount = Math.max(...sorted.map(d => d.count));
 
   return (
@@ -56,7 +73,7 @@ export default function AgeGroupChart({ data }: AgeGroupChartProps) {
           <p className="text-sm font-bold" style={{ color: '#111827' }}>
             {sorted.find(d => d.age_group === 'Under 25')?.count.toLocaleString() ?? 0}
           </p>
-          <p className="text-[10px] mt-0.5" style={{ color: '#9CA3AF' }}>Gen Z (&lt;25)</p>
+          <p className="text-[10px] mt-0.5" style={{ color: '#9CA3AF' }}>Youth (&lt;25)</p>
         </div>
         <div className="text-center">
           <p className="text-sm font-bold" style={{ color: '#111827' }}>

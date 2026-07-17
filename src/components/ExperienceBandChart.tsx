@@ -4,10 +4,23 @@ interface ExperienceBandChartProps { data: WorkforceExperienceBand[]; }
 
 const PALETTE = ['#D1FAE5', '#6EE7B7', '#34D399', '#10B981', '#059669', '#047857'];
 
+const EXP_ORDER: Record<string, number> = {
+  '0–1 year': 1, '0-1 year': 1, '0-1': 1, '0–1': 1,
+  '1–3 years': 2, '1-3 years': 2, '1-3': 2, '1–3': 2,
+  '3–5 years': 3, '3-5 years': 3, '3-5': 3, '3–5': 3,
+  '5–10 years': 4, '5-10 years': 4, '5-10': 4, '5–10': 4,
+  '10–15 years': 5, '10-15 years': 5, '10-15': 5, '10–15': 5,
+  '15+ years': 6, '15+': 6,
+};
+
+function expOrder(band: string): number {
+  return EXP_ORDER[band.toLowerCase().trim()] ?? 99;
+}
+
 export default function ExperienceBandChart({ data }: ExperienceBandChartProps) {
   if (!data.length) return null;
 
-  const sorted = [...data].sort((a, b) => a.sort_order - b.sort_order);
+  const sorted = [...data].sort((a, b) => expOrder(a.band) - expOrder(b.band));
   const maxPct = Math.max(...sorted.map(d => d.pct));
 
   return (

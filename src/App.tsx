@@ -243,10 +243,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  const attendancePct = metrics
-    ? Math.round((metrics.present_today / metrics.active_workforce) * 100)
-    : 0;
-
   return (
     <div className="dashboard-root">
       {/* Sidebar */}
@@ -404,8 +400,7 @@ export default function App() {
                   value={metrics.present_today}
                   icon={ClipboardList}
                   variant="info"
-                  subtitle={`${attendancePct}% attendance rate`}
-                  formula={`Attendance % = (Present Today ÷ Active Workforce) × 100  →  (${metrics.present_today} ÷ ${metrics.active_workforce}) × 100 = ${attendancePct}%`}
+                  subtitle="All employment present"
                   onAction={() => setDrawerFilter('present')}
                 />
                 <KPICard
